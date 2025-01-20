@@ -1,0 +1,6 @@
+// ... existing code ...
+// window.ethereum'u yeniden tanımlamak yerine, varsa kullanın
+if (typeof window.ethereum === 'undefined') {
+    window.ethereum = /* your ethereum implementation */;
+}
+// ... existing code ... 

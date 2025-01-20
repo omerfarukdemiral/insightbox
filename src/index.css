@@ -1,0 +1,79 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    color-scheme: dark;
+  }
+  
+  html {
+    @apply bg-background-dark;
+  }
+
+  html, body {
+    @apply bg-background-dark text-gray-100;
+    min-height: 100vh;
+  }
+
+  #root {
+    @apply min-h-screen flex flex-col bg-background-dark;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-cyber;
+  }
+}
+
+@layer components {
+  .card {
+    @apply bg-gradient-dark rounded-lg p-6 shadow-xl border border-primary-light/20 backdrop-blur-sm;
+  }
+
+  .btn-primary {
+    @apply bg-primary hover:bg-primary-light text-white font-display px-6 py-2 rounded-md transition-all duration-300 ease-in-out;
+  }
+
+  .btn-secondary {
+    @apply bg-background-light hover:bg-background text-gray-300 hover:text-white font-display px-6 py-2 rounded-md transition-all duration-300 ease-in-out border border-primary-light/20;
+  }
+
+  .input-field {
+    @apply bg-background-light border border-primary-light/30 rounded-md px-4 py-2 text-gray-100 focus:outline-none focus:border-accent-blue/50 transition-all duration-300;
+  }
+
+  .nav-link {
+    @apply font-display text-gray-300 hover:text-accent-blue transition-colors duration-300;
+  }
+
+  .nav-icon-link {
+    @apply relative text-gray-400 hover:text-accent-blue p-3 rounded-lg transition-all duration-300 hover:bg-primary-dark/50;
+  }
+
+  .nav-tooltip {
+    @apply invisible opacity-0 absolute left-full ml-2 px-3 py-1 bg-primary border border-primary-light/30 rounded-md text-sm font-display whitespace-nowrap
+    group-hover:visible group-hover:opacity-100 transition-all duration-300;
+  }
+
+  .logo-text {
+    @apply font-cyber text-2xl bg-gradient-to-r from-accent-blue to-accent-purple bg-clip-text text-transparent;
+  }
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-background-light;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-primary rounded-full;
+}
+
+/* Toast Notification Styles */
+.toast-notification {
+  @apply fixed bottom-4 right-4 bg-gradient-dark px-6 py-3 rounded-lg shadow-xl border border-primary-light/20 text-white font-display animate-fade-in-up;
+}
