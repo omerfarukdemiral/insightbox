@@ -1,50 +1,93 @@
-# React + TypeScript + Vite
+# 🧠 InsightBox
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+<div align="center">
+  <img src="public/insight-box-logo.svg" alt="InsightBox Logo" width="200"/>
+  <p><strong>Yapay Zeka Destekli Not Alma ve Bilgi Yönetim Platformu</strong></p>
+  
+  [![Live Demo](https://img.shields.io/badge/demo-live-green.svg)](https://insightbox-orcin.vercel.app/)
+  [![Made with React](https://img.shields.io/badge/React-18.3-blue.svg)](https://reactjs.org/)
+  [![Firebase](https://img.shields.io/badge/Firebase-11.2-orange.svg)](https://firebase.google.com/)
+  [![OpenAI](https://img.shields.io/badge/OpenAI-4.7-purple.svg)](https://openai.com/)
+</div>
 
-Currently, two official plugins are available:
+## 🌟 Özellikler
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- 📝 Akıllı Not Alma ve Organizasyon
+- 🤖 OpenAI Destekli İçerik Analizi
+- 🔍 Gelişmiş Arama ve Filtreleme
+- 📱 Responsive Tasarım
+- 🔐 Güvenli Kullanıcı Yetkilendirme
+- 🎯 Kategori ve Alt Kategori Yönetimi
 
-## Expanding the ESLint configuration
+## 🚀 Demo
 
-If you are developing a production application, we recommend updating the configuration to enable type aware lint rules:
+Uygulamayı test etmek için [https://insightbox-orcin.vercel.app/](https://insightbox-orcin.vercel.app/) adresini ziyaret edebilirsiniz.
 
-- Configure the top-level `parserOptions` property like this:
+## 💻 Teknolojiler
 
-```js
-export default tseslint.config({
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
+- **Frontend:** React, TypeScript, Tailwind CSS
+- **Backend:** Firebase (Authentication, Firestore)
+- **AI Integration:** OpenAI API
+- **Deployment:** Vercel
+- **State Management:** React Context API
+- **UI Components:** Headless UI, Heroicons
+- **Animation:** Framer Motion
+
+## 🛠️ Kurulum
+
+1. Repo'yu klonlayın:
+```bash
+git clone https://github.com/[your-username]/insightbox.git
 ```
 
-- Replace `tseslint.configs.recommended` to `tseslint.configs.recommendedTypeChecked` or `tseslint.configs.strictTypeChecked`
-- Optionally add `...tseslint.configs.stylisticTypeChecked`
-- Install [eslint-plugin-react](https://github.com/jsx-eslint/eslint-plugin-react) and update the config:
-
-```js
-// eslint.config.js
-import react from 'eslint-plugin-react'
-
-export default tseslint.config({
-  // Set the react version
-  settings: { react: { version: '18.3' } },
-  plugins: {
-    // Add the react plugin
-    react,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended rules
-    ...react.configs.recommended.rules,
-    ...react.configs['jsx-runtime'].rules,
-  },
-})
+2. Bağımlılıkları yükleyin:
+```bash
+npm install
 ```
+
+3. `.env.development` dosyasını oluşturun ve gerekli environment variable'ları ekleyin:
+```env
+VITE_FIREBASE_API_KEY=
+VITE_FIREBASE_AUTH_DOMAIN=
+VITE_FIREBASE_PROJECT_ID=
+VITE_FIREBASE_STORAGE_BUCKET=
+VITE_FIREBASE_MESSAGING_SENDER_ID=
+VITE_FIREBASE_APP_ID=
+VITE_FIREBASE_MEASUREMENT_ID=
+VITE_OPENAI_API_KEY=
+```
+
+4. Geliştirme sunucusunu başlatın:
+```bash
+npm run dev
+```
+
+## 📦 Build
+
+Development build için:
+```bash
+npm run build:dev
+```
+
+Production build için:
+```bash
+npm run build:prod
+```
+
+## 🤝 Katkıda Bulunma
+
+1. Fork'layın
+2. Feature branch oluşturun (`git checkout -b feature/amazing-feature`)
+3. Değişikliklerinizi commit edin (`git commit -m 'feat: Add amazing feature'`)
+4. Branch'inizi push edin (`git push origin feature/amazing-feature`)
+5. Pull Request oluşturun
+
+## 📄 Lisans
+
+Bu proje MIT lisansı altında lisanslanmıştır. Detaylar için [LICENSE](LICENSE) dosyasına bakın.
+
+## 📞 İletişim
+
+Proje Sahibi - [@your-twitter](https://twitter.com/your-twitter)
+
+Proje Linki: [https://github.com/[your-username]/insightbox](https://github.com/[your-username]/insightbox)
