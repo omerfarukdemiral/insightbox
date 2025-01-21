@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { getUserInfo, SavedInfo, getUserSubCategories, saveUserSubCategories, getSubCategories } from '../services/firestore';
+import { getUserInfo, getUserSubCategories, saveUserSubCategories, getSubCategories } from '../services/firestore';
 import { FiMail, FiUser, FiCalendar, FiBookmark, FiTag, FiGithub, FiGlobe, FiSettings, FiStar, FiGrid, FiFolder } from 'react-icons/fi';
 import { FcGoogle } from 'react-icons/fc';
-import { Category, CategoryInfo, categories } from '../services/openai';
+import { Category, categories } from '../services/openai';
 import { getFavoriteCategories, updateFavoriteCategories } from '../services/firestore';
 import { toast } from 'react-hot-toast';
 import SubCategoryModal from '../components/SubCategoryModal';
@@ -16,7 +16,6 @@ const Profile = () => {
     totalItems: number;
     categories: Record<string, number>;
   }>({ totalItems: 0, categories: {} });
-  const [loading, setLoading] = useState(true);
   const [favoriteCategories, setFavoriteCategories] = useState<Category[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
   const [selectedSubCategories, setSelectedSubCategories] = useState<Record<Category, string[]>>({});
@@ -41,8 +40,6 @@ const Profile = () => {
         });
       } catch (error) {
         console.error('Kullanıcı istatistikleri yüklenirken hata:', error);
-      } finally {
-        setLoading(false);
       }
     };
 
@@ -73,8 +70,6 @@ const Profile = () => {
       } catch (error) {
         console.error('Veriler yüklenirken hata:', error);
         toast.error('Veriler yüklenemedi');
-      } finally {
-        setLoading(false);
       }
     };
 
@@ -314,7 +309,7 @@ const Profile = () => {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {Object.entries(userStats.categories)
                 .sort(([, a], [, b]) => b - a)
-                .map(([category, count]) => (
+                .map(([category/*, count*/]) => (
                   <div
                     key={category}
                     className="flex items-center font-display"

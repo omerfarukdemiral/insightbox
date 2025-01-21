@@ -1,16 +1,14 @@
 import {
   collection,
-  addDoc,
+  getDocs,
   query,
   where,
-  getDocs,
   deleteDoc,
   doc,
   serverTimestamp,
   Timestamp,
   setDoc,
   getDoc,
-  orderBy,
   writeBatch,
   updateDoc
 } from '@firebase/firestore';
@@ -349,7 +347,10 @@ export const updateFavoriteCategories = async (userId: string, categories: Categ
   }
 };
 
-export const initSubCategories = async (userId: string, categories: any) => {
+export const initSubCategories = async (
+  userId: string, 
+  categories: Record<string, SubCategory[]>
+) => {
   try {
     const userDocRef = doc(db, 'users', userId);
     const userDoc = await getDoc(userDocRef);
@@ -384,11 +385,9 @@ export const updateSubCategories = async (
     const userDoc = await getDoc(userDocRef);
 
     if (userDoc.exists()) {
-      const userPreferences = userDoc.data().preferences || {};
-      
       await updateDoc(userDocRef, {
         [`preferences.${categoryId}`]: {
-          selectedSubCategories: selectedSubCategories,
+          selectedSubCategories,
           updatedAt: serverTimestamp()
         }
       });

@@ -5,7 +5,7 @@ import {
   checkSubCategoriesInitialized,
   markSubCategoriesInitialized
 } from '../services/firestore';
-import { collection, getDocs, writeBatch, deleteDoc } from '@firebase/firestore';
+import { collection, getDocs, writeBatch/*, deleteDoc*/ } from '@firebase/firestore';
 import { db } from '../config/firebase';
 
 const predefinedSubCategories: Record<Category, Array<{ name: string, description: string }>> = {

@@ -1,14 +1,15 @@
 import OpenAI from 'openai';
 import { 
-  FiCode, FiCpu, FiBook, FiMusic, FiGlobe, 
+  FiCode, FiCpu, FiBook, FiGlobe, 
   FiFeather, FiAperture, FiMap, FiCamera, FiZap,
   FiHeart, FiDatabase, FiTrendingUp
 } from 'react-icons/fi';
+import { IconType } from 'react-icons';
 
 export interface CategoryInfo {
   id: string;
   name: string;
-  icon: any; // React icon component
+  icon: IconType;
   description: string;
 }
 
@@ -276,7 +277,7 @@ export const generateImageForInfo = async (content: string, category: string): P
       style: "natural"
     });
 
-    return response.data[0].url;
+    return response.data[0].url || '';
   } catch (error: any) {
     console.error('Görsel oluşturma hatası:', error);
     throw new Error('Görsel oluşturulamadı: ' + error.message);

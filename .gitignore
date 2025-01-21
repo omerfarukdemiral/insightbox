@@ -38,3 +38,6 @@ dist-ssr
 # Build files
 build/
 coverage/
+
+# Vercel
+.vercel

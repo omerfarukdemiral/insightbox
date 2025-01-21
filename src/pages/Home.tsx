@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { useAuth } from '../contexts/AuthContext';
 import { toast } from 'react-hot-toast';
 import { 
   FiArrowUp,
@@ -57,7 +56,6 @@ interface InfoWithVotes extends SavedInfo {
 }
 
 const Home = () => {
-  const { currentUser } = useAuth();
   const [loading, setLoading] = useState(false);
   const [savedInfos, setSavedInfos] = useState<InfoWithVotes[]>([]);
 

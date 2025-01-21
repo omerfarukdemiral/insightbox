@@ -7,10 +7,8 @@ import {
   getUserCollections, 
   createCollection, 
   UserCollection, 
-  SubCategory,
   getSubCategories,
   getUserSubCategories,
-  saveUserSubCategories
 } from '../services/firestore';
 import { getFavoriteCategories } from '../services/firestore';
 import { toast } from 'react-hot-toast';
@@ -18,8 +16,6 @@ import {
   FiSave, 
   FiStar, 
   FiRefreshCw, 
-  FiFolderPlus, 
-  FiX, 
   FiSettings, 
   FiZap 
 } from 'react-icons/fi';
@@ -34,8 +30,6 @@ const Discover = () => {
   const [savedInfos, setSavedInfos] = useState<string[]>([]);
   const [userCollections, setUserCollections] = useState<UserCollection[]>([]);
   const [selectedCollectionId, setSelectedCollectionId] = useState<string>('');
-  const [showCollectionModal, setShowCollectionModal] = useState(false);
-  const [selectedIcon, setSelectedIcon] = useState('FiFolder');
   const [selectedSubCategories, setSelectedSubCategories] = useState<Record<Category, string[]>>({});
   const [selectedSubCategory, setSelectedSubCategory] = useState<string | null>(null);
 
@@ -71,30 +65,6 @@ const Discover = () => {
 
     loadData();
   }, [currentUser]);
-
-  const handleCreateCollection = async () => {
-    if (!currentUser || !selectedIcon) return;
-
-    try {
-      const collectionId = await createCollection(currentUser.uid, selectedIcon);
-      const newCollection = {
-        id: collectionId,
-        name: selectedIcon,
-        icon: selectedIcon,
-        createdAt: new Date(),
-        itemCount: 0
-      };
-      setUserCollections([...userCollections, newCollection]);
-      setSelectedCollectionId(collectionId);
-      setSelectedIcon('FiFolder');
-      setShowCollectionModal(false);
-      
-      toast.success('Yeni koleksiyon oluşturuldu');
-    } catch (error) {
-      console.error('Koleksiyon oluşturulurken hata:', error);
-      toast.error('Koleksiyon oluşturulamadı');
-    }
-  };
 
   const handleCategoryClick = async (categoryId: string, categoryName: string) => {
     console.log('TEST - Kategori seçildi:', categoryName);
@@ -193,18 +163,6 @@ const Discover = () => {
     } catch (error) {
       console.error('Kaydetme hatası:', error);
       toast.error('Bilgi kaydedilemedi');
-    }
-  };
-
-  const handleSaveSubCategories = async () => {
-    if (!currentUser || !selectedCategory) return;
-
-    try {
-      await saveUserSubCategories(currentUser.uid, selectedSubCategories);
-      toast.success('Alt kategori tercihleri kaydedildi');
-    } catch (error) {
-      console.error('Alt kategoriler kaydedilirken hata:', error);
-      toast.error('Alt kategoriler kaydedilemedi');
     }
   };
 
@@ -320,13 +278,6 @@ const Discover = () => {
                           </option>
                         ))}
                       </select>
-
-                      <button
-                        onClick={() => setShowCollectionModal(true)}
-                        className="flex-shrink-0 bg-transparent border border-white/20 hover:border-white/40 text-white p-2.5 rounded-lg transition-all duration-300 hover:bg-white/5"
-                      >
-                        <FiFolderPlus className="w-5 h-5" />
-                      </button>
 
                       <button
                         onClick={handleSave}
