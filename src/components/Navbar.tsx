@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { FiLogOut, FiUser, FiHome, FiCompass, FiFolder } from 'react-icons/fi';
 import { useLocation } from 'react-router-dom';
+import logo from '../assets/insight-box-logo.svg';
 
 const Navbar = () => {
   const { currentUser, logout } = useAuth();
@@ -19,7 +20,7 @@ const Navbar = () => {
     <nav className="fixed md:top-0 bottom-0 md:left-0 w-full md:w-20 md:h-screen h-16 bg-background-dark border-t md:border-t-0 md:border-r border-primary-light/20 flex md:flex-col flex-row items-center md:py-8 z-50">
       <div className="md:mb-12 hidden md:block">
         <Link to="/" className="flex flex-col items-center">
-          <img src="/insight-box-logo.svg" alt="InsightBox Logo" className="w-12 h-12" />
+          <img src={logo} alt="InsightBox Logo" className="w-12 h-12" />
         </Link>
       </div>
 
