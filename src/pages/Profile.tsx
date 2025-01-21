@@ -199,9 +199,7 @@ const Profile = () => {
             activeTab === 'categories' ? 'text-accent-purple' : 'text-current'
           }`} />
           <span>Kategoriler</span>
-          {activeTab === 'categories' && (
-            <span className="absolute -bottom-1 left-0 right-0 h-1 bg-accent-purple rounded-full" />
-          )}
+         
         </button>
 
         <div className="w-px h-8 bg-white/10" />
@@ -218,9 +216,7 @@ const Profile = () => {
             activeTab === 'collections' ? 'text-accent-purple' : 'text-current'
           }`} />
           <span>Koleksiyonlar</span>
-          {activeTab === 'collections' && (
-            <span className="absolute -bottom-1 left-0 right-0 h-1 bg-accent-purple rounded-full" />
-          )}
+       
         </button>
       </div>
     </div>

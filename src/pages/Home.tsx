@@ -22,6 +22,8 @@ import {
   onSnapshot
 } from 'firebase/firestore';
 import { saveVote } from '../services/firestore';
+import { categories } from '../services/openai';
+import { IconType } from 'react-icons';
 
 interface Collection {
   id: string;
@@ -53,6 +55,12 @@ interface SavedInfo {
 interface InfoWithVotes extends SavedInfo {
   voteCount: number;
   userVote?: 'up' | 'down' | null;
+}
+
+interface CategoryInfo {
+  id: string;
+  name: string;
+  icon: IconType;
 }
 
 const Home = () => {
@@ -315,53 +323,62 @@ const Home = () => {
                 </div>
               </div>
 
-              {/* Orta Kısım - Kategoriler ve İçerik */}
+              {/* Orta Kısım - Bilgi İçeriği */}
               <div className="p-4 md:p-6">
-                <div className="flex flex-wrap items-center gap-2 mb-4">
-                  <span className="px-3 py-1 rounded-full bg-white/10 text-white border border-white/20 text-sm">
-                    {item.category}
-                  </span>
-                  {item.subCategory && (
-                    <span className="px-3 py-1 rounded-full bg-accent-purple/10 text-accent-purple border border-accent-purple/20 text-sm">
-                      {item.subCategory}
-                    </span>
-                  )}
-                </div>
-                <p className="leading-relaxed text-gray-200 text-sm md:text-base">{item.content}</p>
-              </div>
+                <p className="text-sm md:text-base text-gray-200 leading-relaxed mb-3">{item.content}</p>
+                
+                {/* Alt Kısım - Kategori, Alt Kategori ve Oylama */}
+                <div className="flex flex-wrap items-center justify-between gap-2 mt-4">
+                  {/* Sol Taraf - Kategori ve Alt Kategori */}
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <div className="flex items-center gap-1.5">
+                      <span className="px-2 py-0.5 bg-accent-purple/10 text-accent-purple rounded-full text-xs">
+                        {categories.find((c: CategoryInfo) => c.id === item.category)?.name || 'Bilinmiyor'}
+                      </span>
+                    </div>
+                    {item.subCategory && (
+                      <div className="flex items-center gap-1.5">
+                        <span className="px-2 py-0.5 bg-accent-purple/10 text-accent-purple rounded-full text-xs">
+                          {item.subCategory}
+                        </span>
+                      </div>
+                    )}
+                  </div>
 
-              {/* Alt Kısım - Oylar */}
-              <div className="px-4 md:px-6 py-3 bg-black/20 border-t border-white/10 flex items-center justify-between">
-                <div className="flex items-center gap-4">
+                  {/* Sağ Taraf - Oylama */}
                   <div className="flex items-center gap-1">
                     <button
                       onClick={() => handleVote(item.id, 'up')}
+                      disabled={!auth.currentUser}
                       className={`p-1.5 rounded-lg transition-colors ${
                         item.userVote === 'up'
                           ? 'text-green-500 bg-green-500/10'
-                          : 'text-gray-400 hover:text-green-500 hover:bg-white/5'
+                          : 'text-gray-400 hover:text-green-500 hover:bg-green-500/10'
                       }`}
-                      title="Yukarı Oy"
+                      title={auth.currentUser ? 'Beğen' : 'Oy vermek için giriş yapın'}
                     >
-                      <FiArrowUp className="w-5 h-5" />
+                      <FiArrowUp className="w-4 h-4" />
                     </button>
-                    <span className={`font-medium ${
-                      item.voteCount > 0 ? 'text-green-500' : 
-                      item.voteCount < 0 ? 'text-red-500' : 
-                      'text-gray-400'
+                    <span className={`text-sm font-medium ${
+                      item.voteCount > 0 
+                        ? 'text-green-500' 
+                        : item.voteCount < 0 
+                          ? 'text-red-500' 
+                          : 'text-gray-400'
                     }`}>
                       {item.voteCount}
                     </span>
                     <button
                       onClick={() => handleVote(item.id, 'down')}
+                      disabled={!auth.currentUser}
                       className={`p-1.5 rounded-lg transition-colors ${
                         item.userVote === 'down'
                           ? 'text-red-500 bg-red-500/10'
-                          : 'text-gray-400 hover:text-red-500 hover:bg-white/5'
+                          : 'text-gray-400 hover:text-red-500 hover:bg-red-500/10'
                       }`}
-                      title="Aşağı Oy"
+                      title={auth.currentUser ? 'Beğenme' : 'Oy vermek için giriş yapın'}
                     >
-                      <FiArrowDown className="w-5 h-5" />
+                      <FiArrowDown className="w-4 h-4" />
                     </button>
                   </div>
                 </div>
