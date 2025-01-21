@@ -1,464 +1,382 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { categories, getRandomInfo, Category, generateSubCategories } from '../services/openai';
-import { 
-  saveInfo, 
-  getUserInfo, 
-  getUserCollections, 
-  createCollection, 
-  UserCollection, 
-  SubCategory,
-  getSubCategories,
-  getUserSubCategories,
-  saveUserSubCategories,
-  saveSubCategories
-} from '../services/firestore';
-import { getFavoriteCategories } from '../services/firestore';
 import { toast } from 'react-hot-toast';
-import { FiSave, FiStar, FiRefreshCw, FiPlus, FiFolderPlus, FiX, FiCheck, FiChevronRight, FiSettings, FiZap } from 'react-icons/fi';
-import { icons } from '../utils/icons';
+import { 
+  FiArrowUp,
+  FiArrowDown,
+  FiUser,
+  FiFolder
+} from 'react-icons/fi';
 import { Link } from 'react-router-dom';
+import { db, auth } from "../config/firebase";
+import { 
+  collection,
+  getDocs,
+  doc,
+  getDoc,
+  Timestamp,
+  DocumentData,
+  setDoc,
+  serverTimestamp,
+  query,
+  where,
+  onSnapshot
+} from 'firebase/firestore';
+import { saveVote } from '../services/firestore';
+
+interface Collection {
+  id: string;
+  name: string;
+  icon?: string;
+  createdAt: Timestamp;
+  itemCount: number;
+}
+
+interface SavedInfo {
+  id: string;
+  userId: string;
+  content: string;
+  category: string;
+  subCategory?: string;
+  createdAt: Timestamp;
+  collectionId: string;
+  collectionName: string;
+  collectionIcon?: string;
+  votes: {
+    up: string[];
+    down: string[];
+  };
+  userDisplayName?: string;
+  userPhotoURL?: string;
+  userEmail?: string;
+}
+
+interface InfoWithVotes extends SavedInfo {
+  voteCount: number;
+  userVote?: 'up' | 'down' | null;
+}
 
 const Home = () => {
   const { currentUser } = useAuth();
-  const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
-  const [currentInfo, setCurrentInfo] = useState<string>('');
   const [loading, setLoading] = useState(false);
-  const [favoriteCategories, setFavoriteCategories] = useState<Category[]>([]);
-  const [savedInfos, setSavedInfos] = useState<string[]>([]);
-  const [userCollections, setUserCollections] = useState<UserCollection[]>([]);
-  const [selectedCollectionId, setSelectedCollectionId] = useState<string>('');
-  const [showNewCollectionModal, setShowNewCollectionModal] = useState(false);
-  const [newCollectionName, setNewCollectionName] = useState('');
-  const [isSaving, setIsSaving] = useState(false);
-  const [showCollectionModal, setShowCollectionModal] = useState(false);
-  const [selectedIcon, setSelectedIcon] = useState('FiFolder');
-  const [subCategories, setSubCategories] = useState<SubCategory[]>([]);
-  const [selectedSubCategories, setSelectedSubCategories] = useState<Record<Category, string[]>>({});
-  const [loadingSubCategories, setLoadingSubCategories] = useState(false);
-  const [selectedSubCategory, setSelectedSubCategory] = useState<string | null>(null);
+  const [savedInfos, setSavedInfos] = useState<InfoWithVotes[]>([]);
 
   useEffect(() => {
-    const loadData = async () => {
-      if (currentUser) {
-        try {
-          const [favorites, infos, collections, userSubCategories] = await Promise.all([
-            getFavoriteCategories(currentUser.uid),
-            getUserInfo(currentUser.uid),
-            getUserCollections(currentUser.uid),
-            getUserSubCategories(currentUser.uid)
-          ]);
+    loadFeedItems();
+  }, []);
 
-          setFavoriteCategories(favorites);
-          setSavedInfos(infos.map(info => info.content));
-          setUserCollections(collections);
-          setSelectedSubCategories(userSubCategories);
+  // Koleksiyon bilgilerini çekme fonksiyonu
+  const getCollectionDetails = async (userId: string, collectionId: string) => {
+    try {
+      const collectionRef = doc(db, 'users', userId, 'collections', collectionId);
+      const collectionDoc = await getDoc(collectionRef);
+      
+      if (collectionDoc.exists()) {
+        const collectionData = collectionDoc.data() as Collection;
+        return {
+          name: collectionData.name,
+          icon: collectionData.icon || "FiFolder"
+        };
+      }
+      
+      console.error(`Koleksiyon bulunamadı: ${collectionId}`);
+      return null;
+    } catch (error) {
+      console.error(`Koleksiyon bilgileri alınamadı (${collectionId}):`, error);
+      return null;
+    }
+  };
 
-          // Eğer koleksiyon yoksa, "Genel" koleksiyonunu oluştur
-          if (collections.length === 0) {
-            const generalId = await createCollection(currentUser.uid, 'Genel');
-            setUserCollections([{ id: generalId, name: 'Genel', createdAt: new Date(), itemCount: 0 }]);
-            setSelectedCollectionId(generalId);
-          } else {
-            setSelectedCollectionId(collections[0].id);
+  const loadFeedItems = async () => {
+    try {
+      setLoading(true);
+      console.log('Feed yükleme başladı');
+      
+      // Önce kullanıcı dokümanını kontrol et ve gerekirse oluştur
+      if (auth.currentUser) {
+        const userRef = doc(db, 'users', auth.currentUser.uid);
+        const userDoc = await getDoc(userRef);
+        
+        if (!userDoc.exists()) {
+          console.log('Kullanıcı dokümanı bulunamadı, oluşturuluyor...');
+          try {
+            await setDoc(userRef, {
+              email: auth.currentUser.email,
+              displayName: auth.currentUser.displayName,
+              photoURL: auth.currentUser.photoURL,
+              createdAt: serverTimestamp(),
+              updatedAt: serverTimestamp()
+            });
+            console.log('Kullanıcı dokümanı oluşturuldu');
+          } catch (error) {
+            console.error('Kullanıcı dokümanı oluşturulurken hata:', error);
           }
-        } catch (error) {
-          console.error('Veriler yüklenirken hata:', error);
+        } else {
+          console.log('Mevcut kullanıcı dokümanı:', userDoc.data());
         }
       }
-    };
+      
+      // 1. Tüm kullanıcıları al
+      const usersRef = collection(db, 'users');
+      const usersSnapshot = await getDocs(usersRef);
+      console.log('Kullanıcı sayısı:', usersSnapshot.docs.length);
+      
+      // 2. Her kullanıcının savedInfo koleksiyonunu al
+      const allInfos = await Promise.all(
+        usersSnapshot.docs.map(async (userDoc) => {
+          try {
+            const userData = userDoc.data() as DocumentData;
+            const savedInfoRef = collection(db, 'users', userDoc.id, 'savedInfo');
+            const savedInfoSnapshot = await getDocs(savedInfoRef);
+            
+            // Her bir savedInfo için işlem yap
+            return Promise.all(
+              savedInfoSnapshot.docs.map(async (infoDoc) => {
+                const infoData = infoDoc.data() as SavedInfo;
+                
+                // Koleksiyon bilgilerini çek
+                const collectionDetails = await getCollectionDetails(userDoc.id, infoData.collectionId);
 
-    loadData();
-  }, [currentUser]);
+                return {
+                  ...infoData,
+                  id: infoDoc.id,
+                  userId: userDoc.id,
+                  userDisplayName: userData.displayName,
+                  userPhotoURL: userData.photoURL,
+                  userEmail: userData.email,
+                  collectionName: collectionDetails?.name || infoData.collectionName || 'Koleksiyon Bulunamadı',
+                  collectionIcon: collectionDetails?.icon || 'FiFolder',
+                  voteCount: (infoData.votes?.up?.length || 0) - (infoData.votes?.down?.length || 0),
+                  userVote: auth.currentUser 
+                    ? infoData.votes?.up?.includes(auth.currentUser.uid)
+                      ? 'up'
+                      : infoData.votes?.down?.includes(auth.currentUser.uid)
+                      ? 'down'
+                      : null
+                    : null
+                } as InfoWithVotes;
+              })
+            );
+          } catch (error) {
+            console.error(`Kullanıcı ${userDoc.id} için veri çekme hatası:`, error);
+            return [];
+          }
+        })
+      );
 
+      const flattenedInfos = allInfos.flat();
+      console.log('Toplam bilgi sayısı:', flattenedInfos.length);
+      
+      const sortedInfos = flattenedInfos.sort((a, b) => 
+        b.createdAt.toMillis() - a.createdAt.toMillis()
+      );
+
+      setSavedInfos(sortedInfos);
+    } catch (error) {
+      console.error('Feed yüklenirken hata:', error);
+      toast.error('Bilgiler yüklenemedi');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Oyları gerçek zamanlı dinle
   useEffect(() => {
-    const loadSubCategories = async () => {
-      if (selectedCategory) {
-        setLoadingSubCategories(true);
-        try {
-          const subCats = await getSubCategories(selectedCategory);
-          setSubCategories(subCats);
-        } catch (error) {
-          console.error('Alt kategoriler yüklenirken hata:', error);
-          toast.error('Alt kategoriler yüklenemedi');
-        } finally {
-          setLoadingSubCategories(false);
-        }
-      }
+    if (savedInfos.length === 0) return;
+
+    // Her bir bilgi için oy dinleyicisi oluştur
+    const unsubscribes = savedInfos.map(info => {
+      const votesRef = collection(db, 'votes');
+      const q = query(votesRef, where('infoId', '==', info.id));
+
+      return onSnapshot(q, (snapshot) => {
+        const votes = {
+          up: [] as string[],
+          down: [] as string[]
+        };
+
+        snapshot.docs.forEach(doc => {
+          const voteData = doc.data();
+          if (voteData.type === 'up') {
+            votes.up.push(voteData.userId);
+          } else {
+            votes.down.push(voteData.userId);
+          }
+        });
+
+        // Yerel state'i güncelle
+        setSavedInfos(prevInfos =>
+          prevInfos.map(item => {
+            if (item.id === info.id) {
+              return {
+                ...item,
+                votes,
+                voteCount: votes.up.length - votes.down.length,
+                userVote: auth.currentUser
+                  ? votes.up.includes(auth.currentUser.uid)
+                    ? 'up'
+                    : votes.down.includes(auth.currentUser.uid)
+                    ? 'down'
+                    : null
+                  : null
+              };
+            }
+            return item;
+          })
+        );
+      });
+    });
+
+    // Cleanup function
+    return () => {
+      unsubscribes.forEach(unsubscribe => unsubscribe());
     };
+  }, [savedInfos.length]);
 
-    loadSubCategories();
-  }, [selectedCategory]);
-
-  const handleCreateCollection = async () => {
-    if (!currentUser || !newCollectionName.trim()) return;
+  const handleVote = async (itemId: string, voteType: 'up' | 'down') => {
+    if (!auth.currentUser) {
+      toast.error('Oy vermek için giriş yapmalısınız');
+      return;
+    }
 
     try {
-      const collectionId = await createCollection(currentUser.uid, newCollectionName.trim(), selectedIcon);
-      const newCollection = {
-        id: collectionId,
-        name: newCollectionName.trim(),
-        icon: selectedIcon,
-        createdAt: new Date(),
-        itemCount: 0
-      };
-      setUserCollections([...userCollections, newCollection]);
-      setSelectedCollectionId(collectionId);
-      setNewCollectionName('');
-      setSelectedIcon('FiFolder');
-      setShowCollectionModal(false);
-      
-      toast.success('Yeni koleksiyon oluşturuldu', {
-        duration: 3000,
-        position: 'bottom-right',
-        style: {
-          background: '#1F2937',
-          color: '#fff',
-          border: '1px solid rgba(99, 102, 241, 0.2)'
+      const targetInfo = savedInfos.find(info => info.id === itemId);
+      if (!targetInfo) {
+        toast.error('Bilgi bulunamadı');
+        return;
+      }
+
+      await saveVote(
+        targetInfo.userId,
+        itemId,
+        auth.currentUser.uid,
+        voteType
+      );
+
+      toast.success('Oyunuz kaydedildi');
+    } catch (error) {
+      console.error('Oy verme hatası - Detaylı bilgi:', {
+        hata: error,
+        hataMetni: error instanceof Error ? error.message : 'Bilinmeyen hata',
+        hataTipi: error instanceof Error ? error.name : 'Bilinmeyen tip',
+        hedefBilgi: {
+          bilgiId: itemId,
+          kullaniciId: auth.currentUser?.uid,
+          koleksiyon: savedInfos.find(info => info.id === itemId)?.collectionId
         }
       });
-    } catch (error) {
-      console.error('Koleksiyon oluşturulurken hata:', error);
-      toast.error('Koleksiyon oluşturulamadı');
+      toast.error('Oy kaydedilemedi');
     }
   };
 
-  const handleCategoryClick = async (categoryId: string, categoryName: string) => {
-    console.log('TEST - Kategori seçildi:', categoryName);
-    setSelectedCategory(categoryId);
-    setSelectedSubCategory(null);
-    
-    try {
-      setLoading(true);
-      // Önce alt kategorileri al
-      const categorySubCategories = await getSubCategories(categoryId);
-      
-      // Kullanıcının seçili alt kategorilerini kontrol et
-      const userSelectedSubCategories = selectedSubCategories[categoryId] || [];
-      
-      // Eğer kullanıcı özel seçim yaptıysa onlar arasından, yapmadıysa tüm alt kategorilerden seç
-      const availableSubCategories = userSelectedSubCategories.length > 0
-        ? categorySubCategories.filter(subCat => userSelectedSubCategories.includes(subCat.id))
-        : categorySubCategories;
-      
-      // Rastgele bir alt kategori seç
-      const randomSubCategory = availableSubCategories[Math.floor(Math.random() * availableSubCategories.length)];
-      
-      // Bilgiyi al
-      const info = await getRandomInfo(categoryId, randomSubCategory.name);
-      setCurrentInfo(info);
-      setSelectedSubCategory(randomSubCategory.name);
-      toast.success('Bilgi başarıyla alındı');
-    } catch (error) {
-      console.error('Bilgi alınırken hata:', error);
-      toast.error('Bilgi alınamadı');
-      setCurrentInfo('');
-      setSelectedSubCategory(null);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleTestInfo = async () => {
-    try {
-      setLoading(true);
-      setSelectedSubCategory(null);
-      
-      const randomCategory = categories[Math.floor(Math.random() * categories.length)];
-      setSelectedCategory(randomCategory.id);
-      
-      // Alt kategorileri al
-      const categorySubCategories = await getSubCategories(randomCategory.id);
-      
-      // Kullanıcının seçili alt kategorilerini kontrol et
-      const userSelectedSubCategories = selectedSubCategories[randomCategory.id] || [];
-      
-      // Eğer kullanıcı özel seçim yaptıysa onlar arasından, yapmadıysa tüm alt kategorilerden seç
-      const availableSubCategories = userSelectedSubCategories.length > 0
-        ? categorySubCategories.filter(subCat => userSelectedSubCategories.includes(subCat.id))
-        : categorySubCategories;
-      
-      // Rastgele bir alt kategori seç
-      const randomSubCategory = availableSubCategories[Math.floor(Math.random() * availableSubCategories.length)];
-      
-      // Bilgiyi al
-      const info = await getRandomInfo(randomCategory.id, randomSubCategory.name);
-      setCurrentInfo(info);
-      setSelectedSubCategory(randomSubCategory.name);
-      toast.success('Test bilgisi alındı');
-    } catch (error) {
-      console.error('Test bilgisi alınırken hata:', error);
-      toast.error('Bilgi alınamadı');
-      setCurrentInfo('');
-      setSelectedSubCategory(null);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleSave = async () => {
-    if (!currentUser || !selectedCategory || !currentInfo || !selectedCollectionId) return;
-
-    setIsSaving(true);
-    try {
-      const categorySubCategories = await getSubCategories(selectedCategory);
-      const selectedSubCats = selectedSubCategories[selectedCategory] || [];
-      
-      // Eğer özel seçim varsa sadece seçili olanlardan, yoksa tümünden seç
-      const availableSubCategories = selectedSubCats.length > 0 
-        ? categorySubCategories.filter(subCat => selectedSubCats.includes(subCat.id))
-        : categorySubCategories;
-      
-      // Rastgele bir alt kategori seç
-      const randomSubCategory = availableSubCategories.length > 0 
-        ? availableSubCategories[Math.floor(Math.random() * availableSubCategories.length)]
-        : undefined;
-
-      await saveInfo(
-        currentUser.uid, 
-        currentInfo, 
-        selectedCategory, 
-        selectedCollectionId,
-        randomSubCategory ? randomSubCategory.name : undefined
-      );
-      setSavedInfos([...savedInfos, currentInfo]);
-      
-      // Koleksiyon listesini güncelle
-      setUserCollections(userCollections.map(col => 
-        col.id === selectedCollectionId 
-          ? { ...col, itemCount: col.itemCount + 1 }
-          : col
-      ));
-
-      toast.success('Bilgi koleksiyonunuza eklendi');
-    } catch (error) {
-      console.error('Kaydetme hatası:', error);
-      toast.error('Bilgi kaydedilemedi');
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
-  const handleSaveSubCategories = async () => {
-    if (!currentUser || !selectedCategory) return;
-
-    try {
-      await saveUserSubCategories(currentUser.uid, selectedSubCategories);
-      toast.success('Alt kategori tercihleri kaydedildi');
-    } catch (error) {
-      console.error('Alt kategoriler kaydedilirken hata:', error);
-      toast.error('Alt kategoriler kaydedilemedi');
-    }
-  };
-
-  // Kategorileri favori ve diğerleri olarak ayır
-  const sortedCategories = [...categories].sort((a, b) => {
-    const aIsFavorite = favoriteCategories.includes(a.id);
-    const bIsFavorite = favoriteCategories.includes(b.id);
-    if (aIsFavorite && !bIsFavorite) return -1;
-    if (!aIsFavorite && bIsFavorite) return 1;
-    return 0;
-  });
+  if (loading) {
+    return (
+      <div className="min-h-screen pt-24 px-8 flex justify-center">
+        <div className="w-12 h-12 border-t-2 border-white rounded-full animate-spin"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen pt-24 px-8">
       <div className="max-w-4xl mx-auto">
         <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold">Yeni Bilgiler Keşfet</h1>
-          <div className="flex items-center gap-4">
-            <button
-              onClick={handleTestInfo}
-              className="flex items-center gap-2 px-4 py-2 bg-accent-purple text-white rounded-lg hover:bg-accent-purple/90 transition-colors"
-              disabled={loading}
-            >
-              <FiZap className="w-4 h-4" />
-              <span>{loading ? 'Yükleniyor...' : 'Rastgele Bilgi Al'}</span>
-            </button>
-            <Link 
-              to="/profile"
-              className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors"
-            >
-              <FiSettings className="w-5 h-5" />
-              <span>Kategorileri Düzenle</span>
-            </Link>
-          </div>
+          <h1 className="text-3xl font-bold">Bilgi Akışı</h1>
+          <Link 
+            to="/discover"
+            className="bg-accent-purple text-white px-4 py-2 rounded-lg hover:bg-accent-purple/90 transition-colors"
+          >
+            Yeni Bilgi Keşfet
+          </Link>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 mb-8">
-          {sortedCategories.map(category => {
-            const Icon = category.icon;
-            const isFavorite = favoriteCategories.includes(category.id);
-            const selectedCount = selectedSubCategories[category.id]?.length || 0;
-            const hasSpecificSelection = selectedCount > 0;
-            
-            return (
-              <button
-                key={category.id}
-                onClick={() => handleCategoryClick(category.id, category.name)}
-                className={`relative group overflow-hidden bg-transparent border border-white/20 hover:border-white/40 rounded-lg p-4 transition-all duration-300 ${
-                  selectedCategory === category.id
-                    ? 'border-white text-white'
-                    : 'text-gray-400 hover:text-white'
-                }`}
-                disabled={loading}
-              >
-                <div className="flex flex-col items-center space-y-2">
-                  <Icon className="w-6 h-6 transform group-hover:scale-110 transition-transform duration-300" />
-                  <span className="font-display">{category.name}</span>
-                  <div className="px-2 py-0.5 rounded-full bg-accent-purple/20 text-accent-purple text-xs">
-                    {hasSpecificSelection ? `${selectedCount} Alt Kategori` : 'Tümü'}
+        <div className="grid gap-6">
+          {savedInfos.map((item) => (
+            <div key={item.id} className="bg-zinc-900/50 border border-white/10 rounded-lg overflow-hidden">
+              {/* Üst Kısım - Kullanıcı ve Koleksiyon Bilgisi */}
+              <div className="px-6 pt-4 pb-2 border-b border-white/10">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <Link to={`/profile/${item.userId}`} className="flex items-center gap-2 text-gray-300 hover:text-white">
+                      <div className="w-8 h-8 rounded-full bg-accent-purple/20 flex items-center justify-center">
+                        <FiUser className="w-4 h-4 text-accent-purple" />
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="text-sm font-medium">{item.userDisplayName || 'İsimsiz Kullanıcı'}</span>
+                        <span className="text-xs text-gray-400">{item.userEmail}</span>
+                      </div>
+                    </Link>
+                    <Link to={`/collection/${item.collectionId}`} className="flex items-center gap-2 text-gray-400">
+                      <FiFolder className="w-4 h-4" />
+                      <span>{item.collectionName}</span>
+                    </Link>
+                  </div>
+                  <div className="flex items-center gap-1 text-sm text-gray-400">
+                    {new Date(item.createdAt.toDate()).toLocaleDateString('tr-TR')}
                   </div>
                 </div>
-                {isFavorite && (
-                  <div className="absolute top-2 right-2">
-                    <FiStar className="w-4 h-4 text-accent-purple" />
-                  </div>
-                )}
-              </button>
-            );
-          })}
-        </div>
-
-        {selectedCategory && (
-          <div className="bg-zinc-900/50 border border-white/10 rounded-lg p-6 space-y-6">
-            {loading ? (
-              <div className="flex justify-center">
-                <div className="w-12 h-12 border-t-2 border-white rounded-full animate-spin"></div>
               </div>
-            ) : currentInfo ? (
-              <>
-                <div className="space-y-4">
-                  <p className="font-display leading-relaxed text-gray-200">{currentInfo}</p>
-                  {selectedSubCategory && (
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm text-gray-400">Alt Kategori:</span>
-                      <span className="px-2 py-1 bg-accent-purple/20 text-accent-purple rounded-full text-sm">
-                        {selectedSubCategory}
-                      </span>
-                    </div>
+
+              {/* Orta Kısım - Kategoriler ve İçerik */}
+              <div className="p-6">
+                <div className="flex items-center gap-2 mb-4">
+                  <span className="px-3 py-1 rounded-full bg-white/10 text-white border border-white/20 text-sm">
+                    {item.category}
+                  </span>
+                  {item.subCategory && (
+                    <span className="px-3 py-1 rounded-full bg-accent-purple/10 text-accent-purple border border-accent-purple/20 text-sm">
+                      {item.subCategory}
+                    </span>
                   )}
                 </div>
-                <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
-                  <div className="flex items-center gap-2 w-full sm:w-auto">
-                    <button
-                      onClick={() => handleCategoryClick(selectedCategory, categories.find(c => c.id === selectedCategory)?.name || '')}
-                      className="flex-shrink-0 bg-transparent border border-white/20 hover:border-white/40 text-white px-6 py-2.5 rounded-lg flex items-center justify-center space-x-2 transition-all duration-300 hover:bg-white/5"
-                      disabled={loading}
-                    >
-                      <FiRefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-                      <span>Yeni Bilgi</span>
-                    </button>
-                  </div>
-
-                  {currentUser && (
-                    <div className="flex items-center gap-2 w-full sm:w-auto">
-                      <select
-                        value={selectedCollectionId}
-                        onChange={(e) => setSelectedCollectionId(e.target.value)}
-                        className="flex-1 sm:w-48 bg-zinc-800 border border-white/20 text-white rounded-lg px-4 py-2.5 focus:outline-none focus:border-white/40"
-                      >
-                        {userCollections.map(collection => (
-                          <option key={collection.id} value={collection.id}>
-                            {collection.name} ({collection.itemCount})
-                          </option>
-                        ))}
-                      </select>
-
-                      <button
-                        onClick={() => setShowCollectionModal(true)}
-                        className="flex-shrink-0 bg-transparent border border-white/20 hover:border-white/40 text-white p-2.5 rounded-lg transition-all duration-300 hover:bg-white/5"
-                      >
-                        <FiFolderPlus className="w-5 h-5" />
-                      </button>
-
-                      <button
-                        onClick={handleSave}
-                        disabled={isSaving || savedInfos.includes(currentInfo)}
-                        className={`flex-shrink-0 bg-white text-zinc-900 px-6 py-2.5 rounded-lg flex items-center space-x-2 transition-all duration-300 ${
-                          isSaving || savedInfos.includes(currentInfo)
-                            ? 'opacity-50 cursor-not-allowed'
-                            : 'hover:bg-gray-100'
-                        }`}
-                      >
-                        <FiSave className="w-4 h-4" />
-                        <span>{savedInfos.includes(currentInfo) ? 'Kaydedildi' : 'Kaydet'}</span>
-                      </button>
-                    </div>
-                  )}
-                </div>
-              </>
-            ) : (
-              <p className="text-gray-400">Bilgi yüklenemedi. Lütfen tekrar deneyin.</p>
-            )}
-          </div>
-        )}
-
-        {!selectedCategory && (
-          <div className="text-center py-12 text-gray-400">
-            <p>Başlamak için bir kategori seçin</p>
-            {currentUser && favoriteCategories.length === 0 && (
-              <p className="mt-2 text-sm">
-                Profil sayfanızdan favori kategorilerinizi seçebilirsiniz
-              </p>
-            )}
-          </div>
-        )}
-
-        {/* Yeni Koleksiyon Modalı */}
-        {showCollectionModal && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-            <div className="bg-zinc-900 border border-white/10 rounded-lg p-6 w-full max-w-md">
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-bold">Yeni Koleksiyon Oluştur</h2>
-                <button
-                  onClick={() => setShowCollectionModal(false)}
-                  className="text-gray-400 hover:text-white transition-colors"
-                >
-                  <FiX className="w-6 h-6" />
-                </button>
+                <p className="leading-relaxed text-gray-200">{item.content}</p>
               </div>
-              <input
-                type="text"
-                value={newCollectionName}
-                onChange={(e) => setNewCollectionName(e.target.value)}
-                placeholder="Koleksiyon adı"
-                className="w-full bg-zinc-800 border border-white/20 text-white rounded-lg px-4 py-2 mb-4 focus:outline-none focus:border-white/40"
-              />
-              <div className="mb-4">
-                <label className="block text-sm text-gray-400 mb-2">İkon Seç</label>
-                <div className="grid grid-cols-6 gap-2 max-h-40 overflow-y-auto p-2 bg-zinc-800 rounded-lg border border-white/20">
-                  {Object.entries(icons).map(([key, Icon]) => (
+
+              {/* Alt Kısım - Oylar */}
+              <div className="px-6 py-3 bg-black/20 border-t border-white/10 flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-1">
                     <button
-                      key={key}
-                      onClick={() => setSelectedIcon(key)}
-                      className={`p-2 rounded-lg transition-all duration-300 ${
-                        selectedIcon === key
-                          ? 'bg-white text-zinc-900'
-                          : 'text-white hover:bg-white/10'
+                      onClick={() => handleVote(item.id, 'up')}
+                      className={`p-1.5 rounded-lg transition-colors ${
+                        item.userVote === 'up'
+                          ? 'text-green-500 bg-green-500/10'
+                          : 'text-gray-400 hover:text-green-500 hover:bg-white/5'
                       }`}
+                      title="Yukarı Oy"
                     >
-                      <Icon className="w-5 h-5" />
+                      <FiArrowUp className="w-5 h-5" />
                     </button>
-                  ))}
+                    <span className={`font-medium ${
+                      item.voteCount > 0 ? 'text-green-500' : 
+                      item.voteCount < 0 ? 'text-red-500' : 
+                      'text-gray-400'
+                    }`}>
+                      {item.voteCount}
+                    </span>
+                    <button
+                      onClick={() => handleVote(item.id, 'down')}
+                      className={`p-1.5 rounded-lg transition-colors ${
+                        item.userVote === 'down'
+                          ? 'text-red-500 bg-red-500/10'
+                          : 'text-gray-400 hover:text-red-500 hover:bg-white/5'
+                      }`}
+                      title="Aşağı Oy"
+                    >
+                      <FiArrowDown className="w-5 h-5" />
+                    </button>
+                  </div>
                 </div>
-              </div>
-              <div className="flex justify-end space-x-2">
-                <button
-                  onClick={() => setShowCollectionModal(false)}
-                  className="bg-transparent border border-white/20 hover:border-white/40 text-white px-4 py-2 rounded-lg transition-all duration-300 hover:bg-white/5"
-                >
-                  İptal
-                </button>
-                <button
-                  onClick={handleCreateCollection}
-                  className="bg-white text-zinc-900 px-4 py-2 rounded-lg transition-all duration-300 hover:bg-gray-100"
-                >
-                  Oluştur
-                </button>
               </div>
             </div>
-          </div>
-        )}
+          ))}
+
+          {savedInfos.length === 0 && (
+            <div className="text-center py-12 text-gray-400">
+              <p>Henüz hiç bilgi paylaşılmamış</p>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

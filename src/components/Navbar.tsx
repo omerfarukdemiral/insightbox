@@ -1,9 +1,11 @@
 import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { FiHome, FiBookmark, FiLogOut, FiUser } from 'react-icons/fi';
+import { FiLogOut, FiUser, FiHome, FiCompass, FiFolder } from 'react-icons/fi';
+import { useLocation } from 'react-router-dom';
 
 const Navbar = () => {
   const { currentUser, logout } = useAuth();
+  const location = useLocation();
 
   const handleLogout = async () => {
     try {
@@ -24,25 +26,41 @@ const Navbar = () => {
       <div className="flex flex-col items-center space-y-8 flex-1">
         <Link
           to="/"
-          className="nav-icon-link group"
+          className={`nav-icon-link group ${
+            location.pathname === '/' ? 'text-white' : 'text-gray-400'
+          }`}
         >
           <FiHome className="w-6 h-6" />
           <span className="nav-tooltip">Ana Sayfa</span>
         </Link>
 
+        <Link
+          to="/discover"
+          className={`nav-icon-link group ${
+            location.pathname === '/discover' ? 'text-white' : 'text-gray-400'
+          }`}
+        >
+          <FiCompass className="w-6 h-6" />
+          <span className="nav-tooltip">Keşfet</span>
+        </Link>
+
+        <Link
+          to="/collection"
+          className={`nav-icon-link group ${
+            location.pathname === '/collection' ? 'text-white' : 'text-gray-400'
+          }`}
+        >
+          <FiFolder className="w-6 h-6" />
+          <span className="nav-tooltip">Koleksiyonlarım</span>
+        </Link>
+
         {currentUser && (
           <>
             <Link
-              to="/collection"
-              className="nav-icon-link group"
-            >
-              <FiBookmark className="w-6 h-6" />
-              <span className="nav-tooltip">Koleksiyon</span>
-            </Link>
-
-            <Link
               to="/profile"
-              className="nav-icon-link group"
+              className={`nav-icon-link group ${
+                location.pathname === '/profile' ? 'text-white' : 'text-gray-400'
+              }`}
             >
               <FiUser className="w-6 h-6" />
               <span className="nav-tooltip">Profil</span>
@@ -50,7 +68,7 @@ const Navbar = () => {
 
             <button
               onClick={handleLogout}
-              className="nav-icon-link group mt-auto"
+              className="nav-icon-link group mt-auto text-gray-400 hover:text-white"
             >
               <FiLogOut className="w-6 h-6" />
               <span className="nav-tooltip">Çıkış</span>
@@ -61,7 +79,9 @@ const Navbar = () => {
         {!currentUser && (
           <Link
             to="/login"
-            className="nav-icon-link group"
+            className={`nav-icon-link group ${
+              location.pathname === '/login' ? 'text-white' : 'text-gray-400'
+            }`}
           >
             <FiUser className="w-6 h-6" />
             <span className="nav-tooltip">Giriş</span>

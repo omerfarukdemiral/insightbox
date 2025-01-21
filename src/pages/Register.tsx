@@ -46,12 +46,15 @@ const Register = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen flex items-center justify-center px-4 sm:px-6 lg:px-8 bg-background-dark">
       <div className="w-full max-w-md">
-        <div className="card backdrop-blur-lg bg-opacity-50">
+        <div className="bg-zinc-900/50 backdrop-blur-sm border border-white/10 rounded-lg p-8">
           <div className="text-center mb-8">
-            <h2 className="logo-text text-3xl mb-2">InsightBox</h2>
-            <p className="font-display text-gray-400">Yeni Hesap Oluştur</p>
+            <div className="flex justify-center mb-4">
+              <img src="/insight-box-logo.svg" alt="InsightBox Logo" className="w-16 h-16" />
+            </div>
+            <h2 className="text-2xl font-bold text-white mb-2">Hesap Oluştur</h2>
+            <p className="text-gray-400">AI Destekli Bilgi Platformuna Katılın</p>
           </div>
 
           {error && (
@@ -128,9 +131,9 @@ const Register = () => {
           </div>
 
           <div className="mt-6 text-center">
-            <p className="text-gray-400 font-display">
+            <p className="text-gray-400">
               Zaten hesabınız var mı?{' '}
-              <Link to="/login" className="text-accent-blue hover:text-accent-purple transition-colors">
+              <Link to="/login" className="text-white hover:text-gray-300 transition-colors">
                 Giriş Yapın
               </Link>
             </p>

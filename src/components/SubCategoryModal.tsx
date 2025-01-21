@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Category } from '../services/openai';
 import { SubCategory, getSubCategories } from '../services/firestore';
 import { useAuth } from '../contexts/AuthContext';
-import { FiX, FiCheck } from 'react-icons/fi';
+import { FiX, FiCheck, FiLoader } from 'react-icons/fi';
 import { toast } from 'react-hot-toast';
 
 interface SubCategoryModalProps {
@@ -24,37 +24,40 @@ const SubCategoryModal = ({
   const [subCategories, setSubCategories] = useState<SubCategory[]>([]);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [hasCustomSelection, setHasCustomSelection] = useState(false);
 
-  useEffect(() => {
-    const loadSubCategories = async () => {
-      if (!selectedCategory) return;
+  const loadSubCategories = useCallback(async () => {
+    if (!selectedCategory || !currentUser) return;
+    
+    try {
+      setLoading(true);
+      setError(null);
       
-      try {
-        setLoading(true);
-        const subCats = await getSubCategories(selectedCategory);
-        setSubCategories(subCats);
-        
-        // Eğer özel seçim varsa onu kullan, yoksa tümünü seç
-        if (initialSelectedSubCategories.length > 0) {
-          setSelectedIds(initialSelectedSubCategories);
-          setHasCustomSelection(true);
-        } else {
-          setSelectedIds(subCats.map(cat => cat.id));
-          setHasCustomSelection(false);
-        }
-      } catch (error) {
-        console.error('Alt kategoriler yüklenirken hata:', error);
-        toast.error('Alt kategoriler yüklenemedi');
-      } finally {
-        setLoading(false);
+      const subCats = await getSubCategories(selectedCategory);
+      setSubCategories(subCats);
+      
+      // Eğer özel seçim varsa onu kullan, yoksa tümünü seç
+      if (initialSelectedSubCategories.length > 0) {
+        setSelectedIds(initialSelectedSubCategories);
+        setHasCustomSelection(true);
+      } else {
+        setSelectedIds(subCats.map(cat => cat.id));
+        setHasCustomSelection(false);
       }
-    };
+    } catch (error) {
+      console.error('Alt kategoriler yüklenirken hata:', error);
+      setError('Alt kategoriler yüklenemedi. Lütfen tekrar deneyin.');
+    } finally {
+      setLoading(false);
+    }
+  }, [selectedCategory, currentUser, initialSelectedSubCategories]);
 
+  useEffect(() => {
     if (isOpen) {
       loadSubCategories();
     }
-  }, [selectedCategory, isOpen, initialSelectedSubCategories]);
+  }, [isOpen, loadSubCategories]);
 
   const toggleSubCategory = (subCategoryId: string) => {
     setHasCustomSelection(true);
@@ -78,7 +81,10 @@ const SubCategoryModal = ({
   };
 
   const handleSave = async () => {
-    if (!currentUser) return;
+    if (!currentUser) {
+      toast.error('Oturum açmanız gerekiyor');
+      return;
+    }
 
     try {
       // Eğer özel seçim yoksa boş dizi gönder (tümü seçili anlamına gelir)
@@ -115,7 +121,19 @@ const SubCategoryModal = ({
 
         {loading ? (
           <div className="flex-1 flex items-center justify-center">
-            <div className="w-12 h-12 border-t-2 border-white rounded-full animate-spin"></div>
+            <FiLoader className="w-12 h-12 animate-spin text-accent-purple" />
+          </div>
+        ) : error ? (
+          <div className="flex-1 flex items-center justify-center text-center">
+            <div>
+              <p className="text-red-500 mb-4">{error}</p>
+              <button
+                onClick={loadSubCategories}
+                className="text-accent-purple hover:text-accent-purple/80 transition-colors"
+              >
+                Tekrar Dene
+              </button>
+            </div>
           </div>
         ) : (
           <>

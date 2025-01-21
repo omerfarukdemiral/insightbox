@@ -8,6 +8,7 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import Collection from './pages/Collection';
 import Profile from './pages/Profile';
+import Discover from './pages/Discover';
 import { Toaster } from 'react-hot-toast';
 import { initializeSubCategories } from './utils/initSubCategories';
 
@@ -35,6 +36,7 @@ function App() {
             <Route path="/" element={<ProtectedRoute><Home /></ProtectedRoute>} />
             <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
             <Route path="/collection" element={<ProtectedRoute><Collection /></ProtectedRoute>} />
+            <Route path="/discover" element={<ProtectedRoute><Discover /></ProtectedRoute>} />
           </Routes>
         </div>
         <Toaster position="bottom-right" />

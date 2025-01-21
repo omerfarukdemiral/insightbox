@@ -164,7 +164,43 @@ export const getRandomInfo = async (category: Category, subCategory?: string): P
       throw new Error('OpenAI API anahtarı bulunamadı');
     }
 
-    const prompt = `${categoryInfo.name} ${subCategory ? `ve özellikle ${subCategory} konusunda` : 'konusunda'} ilginç ve öğretici bir bilgi ver. Bilgi kısa ve öz olmalı, en fazla 2-3 cümle olmalı. Yanıtı Türkçe olarak ver.`;
+    // Bilgi türlerini tanımlayalım
+    const infoTypes = [
+      'güncel bir gelişme',
+      'tarihi bir olay',
+      'ilginç bir istatistik',
+      'az bilinen bir gerçek',
+      'önemli bir buluş',
+      'dikkat çekici bir araştırma sonucu'
+    ];
+
+    // Rastgele bir bilgi türü seçelim
+    const randomInfoType = infoTypes[Math.floor(Math.random() * infoTypes.length)];
+
+    // Zaman periyotlarını tanımlayalım
+    const timePeriods = subCategory ? [] : [
+      'son 5 yıl içinde',
+      'geçtiğimiz on yılda',
+      'tarihte',
+      'günümüzde',
+      'yakın zamanda'
+    ];
+
+    // Rastgele bir zaman periyodu seçelim (alt kategori varsa kullanmayalım)
+    const randomTimePeriod = timePeriods.length > 0 
+      ? timePeriods[Math.floor(Math.random() * timePeriods.length)]
+      : '';
+
+    const prompt = `${categoryInfo.name} ${subCategory ? `alanında ${subCategory} konusunda` : 'alanında'} ${randomTimePeriod} gerçekleşen ${randomInfoType} hakkında özgün ve spesifik bir bilgi ver. 
+    
+    Lütfen şu kurallara uy:
+    1. Daha önce vermediğin, özgün bir bilgi olsun
+    2. Genel geçer bilgiler yerine spesifik detaylar içersin
+    3. Tarih, sayı, oran gibi kesin veriler kullan
+    4. Bilgiyi 2-3 cümle ile sınırla
+    5. Bilimsel veya güvenilir kaynaklara dayandır
+    
+    Yanıtı Türkçe olarak ver.`;
 
     console.log('OpenAI isteği hazırlandı:', {
       model: "gpt-4",
@@ -177,14 +213,16 @@ export const getRandomInfo = async (category: Category, subCategory?: string): P
       messages: [
         {
           role: "system",
-          content: "Sen bir bilgi uzmanısın. İlginç, öğretici ve doğrulanmış bilgiler veriyorsun. Her zaman güvenilir ve net bilgiler sunuyorsun."
+          content: "Sen bir uzman araştırmacısın. Her seferinde benzersiz, spesifik ve doğrulanabilir bilgiler sunmakla yükümlüsün. Asla genel geçer bilgiler verme, her zaman özgün ve detaylı bilgiler sun. Verdiğin her bilgi için güvenilir kaynakların olduğundan emin ol."
         },
         {
           role: "user",
           content: prompt
         }
       ],
-      temperature: 0.7,
+      temperature: 0.9,
+      presence_penalty: 0.6,
+      frequency_penalty: 0.8,
       max_tokens: 200
     });
 
@@ -218,5 +256,29 @@ export const getRandomInfo = async (category: Category, subCategory?: string): P
     }
 
     throw new Error(`OpenAI hatası: ${err?.message}`);
+  }
+};
+
+export const generateImageForInfo = async (content: string, category: string): Promise<string> => {
+  try {
+    const prompt = `Create a minimalist, modern illustration for the following information about ${category}: "${content}". 
+    The image should be simple, memorable, and use a style that helps convey the information visually.
+    Use a clean, professional style with a cohesive color palette.
+    Make it suitable for educational content.
+    The image should work well at both small and large sizes.`;
+
+    const response = await openai.images.generate({
+      model: "dall-e-3",
+      prompt: prompt,
+      n: 1,
+      size: "1024x1024",
+      quality: "standard",
+      style: "natural"
+    });
+
+    return response.data[0].url;
+  } catch (error: any) {
+    console.error('Görsel oluşturma hatası:', error);
+    throw new Error('Görsel oluşturulamadı: ' + error.message);
   }
 }; 

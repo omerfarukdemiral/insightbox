@@ -1,0 +1,58 @@
+/* Başlık Stilleri */
+.heading-1 {
+  @apply font-merriweather text-3xl font-bold leading-tight;
+}
+
+.heading-2 {
+  @apply font-merriweather text-2xl font-bold leading-tight;
+}
+
+.heading-3 {
+  @apply font-merriweather text-xl font-semibold leading-snug;
+}
+
+/* Metin Stilleri */
+.text-body {
+  @apply font-merriweather text-base font-normal leading-relaxed;
+}
+
+.text-body-small {
+  @apply font-merriweather text-sm font-normal leading-relaxed;
+}
+
+/* Modal ve Alert Stilleri */
+.modal-title {
+  @apply font-merriweather text-xl font-bold mb-4;
+}
+
+.modal-body {
+  @apply font-merriweather text-base font-normal;
+}
+
+/* Form Elemanları */
+.input-label {
+  @apply font-merriweather text-sm font-medium mb-1;
+}
+
+.button-text {
+  @apply font-merriweather text-base font-semibold;
+}
+
+/* Navigasyon */
+.nav-link {
+  @apply font-merriweather text-base font-medium;
+}
+
+/* Kartlar */
+.card-title {
+  @apply font-merriweather text-lg font-bold mb-2;
+}
+
+.card-body {
+  @apply font-merriweather text-base font-normal;
+}
+
+/* Alert/Notification */
+.alert-text {
+  @apply font-merriweather text-sm font-medium;
+} 

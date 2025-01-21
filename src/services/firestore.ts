@@ -27,10 +27,11 @@ export interface SubCategory {
 export interface SavedInfo {
   id: string;
   content: string;
-  category: Category;
+  category: string;
   subCategory?: string;
   collectionId: string;
   createdAt: Date;
+  imageUrl?: string;
 }
 
 export interface UserCollection {
@@ -43,13 +44,16 @@ export interface UserCollection {
 }
 
 export interface UserPreferences {
+  selectedSubCategories: Record<Category, string[]>;
   favoriteCategories: Category[];
   lastUpdated: Date;
 }
 
-export interface UserSubCategoryPreferences {
-  selectedSubCategories: Record<Category, string[]>;
-  lastUpdated: Date;
+export interface Vote {
+  userId: string;
+  type: 'up' | 'down';
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 // Koleksiyon oluşturma
@@ -265,60 +269,61 @@ export const getSubCategories = async (parentCategory?: Category): Promise<SubCa
   }
 };
 
-// Kullanıcının seçtiği alt kategorileri kaydetme
-export const saveUserSubCategories = async (userId: string, selectedSubCategories: Record<Category, string[]>) => {
+// Kullanıcı tercihlerini getirme
+export const getUserPreferences = async (userId: string): Promise<UserPreferences> => {
   try {
-    // Sadece özel seçimleri kaydet (boş olmayan dizileri)
-    const filteredSelections = Object.entries(selectedSubCategories).reduce((acc, [category, selections]) => {
-      if (selections && selections.length > 0) {
-        acc[category] = selections;
-      }
-      return acc;
-    }, {} as Record<Category, string[]>);
+    const userPrefsRef = doc(db, 'userPreferences', userId);
+    const docSnap = await getDoc(userPrefsRef);
+    
+    if (docSnap.exists()) {
+      return docSnap.data() as UserPreferences;
+    }
+    
+    // Varsayılan tercihleri döndür
+    return {
+      selectedSubCategories: {},
+      favoriteCategories: [],
+      lastUpdated: new Date()
+    };
+  } catch (error) {
+    console.error('Kullanıcı tercihleri alınırken hata:', error);
+    throw error;
+  }
+};
 
+// Kullanıcı tercihlerini kaydetme
+export const saveUserPreferences = async (userId: string, preferences: Partial<UserPreferences>) => {
+  try {
     const userPrefsRef = doc(db, 'userPreferences', userId);
     await setDoc(userPrefsRef, {
-      selectedSubCategories: filteredSelections,
+      ...preferences,
       lastUpdated: serverTimestamp()
     }, { merge: true });
     
-    console.log('Alt kategori tercihleri kaydedildi:', filteredSelections);
     return true;
+  } catch (error) {
+    console.error('Kullanıcı tercihleri kaydedilirken hata:', error);
+    throw error;
+  }
+};
+
+// Kullanıcının alt kategori tercihlerini kaydetme
+export const saveUserSubCategories = async (userId: string, selectedSubCategories: Record<Category, string[]>) => {
+  try {
+    return saveUserPreferences(userId, { selectedSubCategories });
   } catch (error) {
     console.error('Alt kategoriler kaydedilirken hata:', error);
     throw error;
   }
 };
 
-// Kullanıcının seçtiği alt kategorileri getirme
+// Kullanıcının alt kategori tercihlerini getirme
 export const getUserSubCategories = async (userId: string): Promise<Record<Category, string[]>> => {
   try {
-    const userPrefsRef = doc(db, 'userPreferences', userId);
-    const docSnap = await getDoc(userPrefsRef);
-    
-    if (docSnap.exists()) {
-      const data = docSnap.data() as UserSubCategoryPreferences;
-      // Sadece özel seçimleri döndür
-      return data.selectedSubCategories || {};
-    }
-    return {};
+    const preferences = await getUserPreferences(userId);
+    return preferences.selectedSubCategories || {};
   } catch (error) {
     console.error('Alt kategoriler alınırken hata:', error);
-    throw error;
-  }
-};
-
-// Favori kategorileri kaydetme
-export const saveFavoriteCategories = async (userId: string, categories: Category[]) => {
-  try {
-    const userPrefsRef = doc(db, 'userPreferences', userId);
-    await setDoc(userPrefsRef, {
-      favoriteCategories: categories,
-      lastUpdated: new Date()
-    }, { merge: true });
-    return true;
-  } catch (error) {
-    console.error('Favori kategoriler kaydedilirken hata:', error);
     throw error;
   }
 };
@@ -326,14 +331,8 @@ export const saveFavoriteCategories = async (userId: string, categories: Categor
 // Favori kategorileri getirme
 export const getFavoriteCategories = async (userId: string): Promise<Category[]> => {
   try {
-    const userPrefsRef = doc(db, 'userPreferences', userId);
-    const docSnap = await getDoc(userPrefsRef);
-    
-    if (docSnap.exists()) {
-      const data = docSnap.data() as UserPreferences;
-      return data.favoriteCategories || [];
-    }
-    return [];
+    const preferences = await getUserPreferences(userId);
+    return preferences.favoriteCategories || [];
   } catch (error) {
     console.error('Favori kategoriler alınırken hata:', error);
     throw error;
@@ -342,7 +341,12 @@ export const getFavoriteCategories = async (userId: string): Promise<Category[]>
 
 // Favori kategorileri güncelleme
 export const updateFavoriteCategories = async (userId: string, categories: Category[]) => {
-  return saveFavoriteCategories(userId, categories);
+  try {
+    return saveUserPreferences(userId, { favoriteCategories: categories });
+  } catch (error) {
+    console.error('Favori kategoriler güncellenirken hata:', error);
+    throw error;
+  }
 };
 
 export const initSubCategories = async (userId: string, categories: any) => {
@@ -394,5 +398,99 @@ export const updateSubCategories = async (
   } catch (error) {
     console.error('Alt kategoriler güncellenirken hata:', error);
     return false;
+  }
+};
+
+export const updateInfoImage = async (userId: string, infoId: string, imageUrl: string | null) => {
+  try {
+    const infoRef = doc(db, 'users', userId, 'savedInfo', infoId);
+    await updateDoc(infoRef, {
+      imageUrl: imageUrl
+    });
+  } catch (error) {
+    console.error('Görsel güncellenirken hata:', error);
+    throw error;
+  }
+};
+
+// Oy verme
+export const saveVote = async (
+  targetUserId: string,
+  infoId: string,
+  votingUserId: string,
+  voteType: 'up' | 'down'
+) => {
+  try {
+    // votes koleksiyonunda doküman oluştur
+    const voteRef = doc(db, 'votes', `${infoId}_${votingUserId}`);
+    const voteDoc = await getDoc(voteRef);
+
+    if (voteDoc.exists()) {
+      // Eğer aynı oy türü ise oyu kaldır
+      if (voteDoc.data()?.type === voteType) {
+        await deleteDoc(voteRef);
+        return null;
+      }
+    }
+
+    // Yeni oyu kaydet
+    await setDoc(voteRef, {
+      infoId,
+      targetUserId,
+      userId: votingUserId,
+      type: voteType,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp()
+    });
+
+    return voteType;
+  } catch (error) {
+    console.error('Oy kaydedilirken hata:', error);
+    throw error;
+  }
+};
+
+// Bilgi için oyları getir
+export const getVotesForInfo = async (infoId: string) => {
+  try {
+    const votesRef = collection(db, 'votes');
+    const q = query(votesRef, where('infoId', '==', infoId));
+    const querySnapshot = await getDocs(q);
+    
+    const votes = {
+      up: [] as string[],
+      down: [] as string[]
+    };
+
+    querySnapshot.docs.forEach(doc => {
+      const voteData = doc.data();
+      if (voteData.type === 'up') {
+        votes.up.push(voteData.userId);
+      } else {
+        votes.down.push(voteData.userId);
+      }
+    });
+
+    return votes;
+  } catch (error) {
+    console.error('Oylar alınırken hata:', error);
+    throw error;
+  }
+};
+
+// Kullanıcının oyunu getir
+export const getUserVote = async (infoId: string, userId: string) => {
+  try {
+    const voteRef = doc(db, 'votes', `${infoId}_${userId}`);
+    const voteDoc = await getDoc(voteRef);
+    
+    if (voteDoc.exists()) {
+      return voteDoc.data()?.type as 'up' | 'down';
+    }
+    
+    return null;
+  } catch (error) {
+    console.error('Kullanıcı oyu alınırken hata:', error);
+    throw error;
   }
 }; 

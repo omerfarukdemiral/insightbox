@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { getUserInfo, deleteInfo, SavedInfo, getUserCollections, UserCollection, createCollection, deleteCollection } from '../services/firestore';
-import { FiTrash2, FiSearch, FiFilter, FiFolder, FiGrid, FiFolderPlus, FiX, FiAlertTriangle, FiArrowLeft } from 'react-icons/fi';
+import { getUserInfo, deleteInfo, SavedInfo, getUserCollections, UserCollection, createCollection, deleteCollection, updateInfoImage } from '../services/firestore';
+import { generateImageForInfo } from '../services/openai';
+import { FiTrash2, FiSearch, FiFilter, FiGrid, FiFolderPlus, FiX, FiAlertTriangle, FiArrowLeft, FiImage, FiCopy } from 'react-icons/fi';
 import { toast } from 'react-hot-toast';
 import { icons } from '../utils/icons';
 
@@ -42,7 +43,6 @@ const DeleteModal = ({ collectionName, onConfirm, onCancel }: DeleteModalProps) 
 const Collection = () => {
   const { currentUser } = useAuth();
   const [savedInfo, setSavedInfo] = useState<SavedInfo[]>([]);
-  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [selectedCollection, setSelectedCollection] = useState<string | null>(null);
@@ -52,6 +52,8 @@ const Collection = () => {
   const [newCollectionName, setNewCollectionName] = useState('');
   const [selectedIcon, setSelectedIcon] = useState('FiFolder');
   const [deleteModalInfo, setDeleteModalInfo] = useState<{ id: string; name: string } | null>(null);
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [generatingImage, setGeneratingImage] = useState<string | null>(null);
 
   const loadData = async () => {
     if (!currentUser) return;
@@ -67,8 +69,6 @@ const Collection = () => {
     } catch (error) {
       console.error('Veriler yüklenirken hata:', error);
       toast.error('Bilgiler yüklenemedi');
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -126,6 +126,57 @@ const Collection = () => {
     } catch (error) {
       console.error('Koleksiyon silinirken hata:', error);
       toast.error('Koleksiyon silinemedi');
+    }
+  };
+
+  const handleGenerateImage = async (info: SavedInfo) => {
+    if (!currentUser) return;
+    
+    try {
+      setGeneratingImage(info.id);
+      const imageUrl = await generateImageForInfo(info.content, info.category);
+      await updateInfoImage(currentUser.uid, info.id, imageUrl);
+      
+      // Yerel state'i güncelle
+      setSavedInfo(savedInfo.map(item => 
+        item.id === info.id ? { ...item, imageUrl } : item
+      ));
+      
+      toast.success('Görsel oluşturuldu');
+    } catch (error) {
+      console.error('Görsel oluşturma hatası:', error);
+      toast.error('Görsel oluşturulamadı');
+    } finally {
+      setGeneratingImage(null);
+    }
+  };
+
+  const handleDeleteImage = async (info: SavedInfo) => {
+    if (!currentUser) return;
+    
+    try {
+      await updateInfoImage(currentUser.uid, info.id, null);
+      
+      // Yerel state'i güncelle
+      setSavedInfo(savedInfo.map(item => 
+        item.id === info.id ? { ...item, imageUrl: undefined } : item
+      ));
+      
+      toast.success('Görsel silindi');
+    } catch (error) {
+      console.error('Görsel silme hatası:', error);
+      toast.error('Görsel silinemedi');
+    }
+  };
+
+  const handleCopyContent = (content: string) => {
+    navigator.clipboard.writeText(content);
+    toast.success('Metin kopyalandı');
+  };
+
+  const handleImageSelect = (imageUrl: string | undefined) => {
+    if (imageUrl) {
+      setSelectedImage(imageUrl);
     }
   };
 
@@ -292,34 +343,75 @@ const Collection = () => {
         {filteredInfo.length > 0 ? (
           <div className={viewMode === 'grid' ? 'grid grid-cols-2 gap-4' : 'grid gap-4'}>
             {filteredInfo.map((info) => (
-              <div key={info.id} className="bg-zinc-900/50 border border-white/10 rounded-lg p-6">
-                <div className="flex justify-between items-start gap-4">
-                  <div className="flex-1">
-                    <p className="font-display leading-relaxed mb-3 text-gray-200">{info.content}</p>
-                    <div className="flex items-center text-sm">
-                      <span className="px-3 py-1 rounded-full bg-white/10 text-white border border-white/20">
-                        {info.category}
+              <div key={info.id} className="bg-zinc-900/50 border border-white/10 rounded-lg overflow-hidden">
+                {/* Üst Kısım - Kategoriler */}
+                <div className="px-6 pt-4 pb-2 border-b border-white/10">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="px-3 py-1 rounded-full bg-white/10 text-white border border-white/20 text-sm">
+                      {info.category}
+                    </span>
+                    {info.subCategory && (
+                      <span className="px-3 py-1 rounded-full bg-accent-purple/10 text-accent-purple border border-accent-purple/20 text-sm">
+                        {info.subCategory}
                       </span>
-                      {info.subCategory && (
-                        <>
-                          <span className="mx-2 text-gray-400">•</span>
-                          <span className="px-3 py-1 rounded-full bg-accent-purple/10 text-accent-purple border border-accent-purple/20">
-                            {info.subCategory}
-                          </span>
-                        </>
-                      )}
-                      <span className="mx-2 text-gray-400">•</span>
-                      <span className="text-gray-400">
-                        {new Date(info.createdAt).toLocaleDateString('tr-TR')}
-                      </span>
-                    </div>
+                    )}
                   </div>
-                  <button
-                    onClick={() => handleDelete(info.id)}
-                    className="text-gray-400 hover:text-red-500 transition-colors p-1"
-                  >
-                    <FiTrash2 className="w-5 h-5" />
-                  </button>
+                </div>
+
+                {/* Orta Kısım - İçerik ve Görsel */}
+                <div className="p-6">
+                  <p className="leading-relaxed text-gray-200 mb-4">{info.content}</p>
+                  {info.imageUrl && (
+                    <div className="relative group mb-4">
+                      <img 
+                        src={info.imageUrl} 
+                        alt="Bilgi görseli"
+                        className="w-full h-48 object-cover rounded-lg cursor-pointer"
+                        onClick={() => handleImageSelect(info.imageUrl)}
+                      />
+                      <button
+                        onClick={() => handleDeleteImage(info)}
+                        className="absolute top-2 right-2 bg-black/50 text-white p-2 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                      >
+                        <FiTrash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                {/* Alt Kısım - Footer */}
+                <div className="px-6 py-3 bg-black/20 border-t border-white/10 flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => handleGenerateImage(info)}
+                      disabled={!!generatingImage}
+                      className={`flex items-center gap-2 px-3 py-1.5 rounded-lg bg-accent-purple hover:bg-accent-purple/80 text-white transition-all duration-300 ${
+                        generatingImage === info.id ? 'animate-pulse' : ''
+                      }`}
+                    >
+                      <FiImage className="w-4 h-4" />
+                      <span className="text-sm">Görsel Oluştur</span>
+                    </button>
+                    <button
+                      onClick={() => handleCopyContent(info.content)}
+                      className="p-1.5 text-gray-400 hover:text-white transition-colors rounded-lg hover:bg-white/5"
+                      title="Metni Kopyala"
+                    >
+                      <FiCopy className="w-4 h-4" />
+                    </button>
+                  </div>
+                  <div className="flex items-center">
+                    <span className="text-sm text-gray-400 mr-4">
+                      {new Date(info.createdAt).toLocaleDateString('tr-TR')}
+                    </span>
+                    <button
+                      onClick={() => handleDelete(info.id)}
+                      className="p-1.5 text-gray-400 hover:text-red-500 transition-colors rounded-lg hover:bg-white/5"
+                      title="Sil"
+                    >
+                      <FiTrash2 className="w-4 h-4" />
+                    </button>
+                  </div>
                 </div>
               </div>
             ))}
@@ -403,6 +495,27 @@ const Collection = () => {
             onConfirm={handleDeleteCollection}
             onCancel={() => setDeleteModalInfo(null)}
           />
+        )}
+
+        {selectedImage && (
+          <div 
+            className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-8 cursor-pointer"
+            onClick={() => setSelectedImage(null)}
+          >
+            <div className="relative max-w-4xl w-full">
+              <img 
+                src={selectedImage} 
+                alt="Büyütülmüş görsel" 
+                className="w-full h-auto rounded-lg"
+              />
+              <button
+                onClick={() => setSelectedImage(null)}
+                className="absolute top-4 right-4 bg-black/50 text-white p-2 rounded-lg hover:bg-black/70 transition-colors"
+              >
+                <FiX className="w-6 h-6" />
+              </button>
+            </div>
+          </div>
         )}
       </div>
     </div>

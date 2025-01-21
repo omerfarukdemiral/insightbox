@@ -1,5 +1,5 @@
 /** @type {import('tailwindcss').Config} */
-module.exports = {
+export default {
   content: [
     "./index.html",
     "./src/**/*.{js,ts,jsx,tsx}",
@@ -24,9 +24,18 @@ module.exports = {
         }
       },
       fontFamily: {
-        'cyber': ['Orbitron', 'sans-serif'],
-        'display': ['Rajdhani', 'sans-serif'],
-        'body': ['Inter', 'sans-serif'],
+        'sans': ['Merriweather', 'serif'],
+        'display': ['Merriweather', 'serif'],
+        'body': ['Merriweather', 'serif'],
+        'merriweather': ['Merriweather', 'serif'],
+      },
+      fontWeight: {
+        'light': 300,
+        'normal': 400,
+        'medium': 500,
+        'semibold': 600,
+        'bold': 700,
+        'extrabold': 900,
       },
       backgroundImage: {
         'gradient-dark': 'linear-gradient(to right, #0A192F, #112240)',

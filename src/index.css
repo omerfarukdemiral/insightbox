@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Merriweather:ital,wght@0,300;0,400;0,700;0,900;1,300;1,400;1,700;1,900&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -8,11 +10,11 @@
   }
   
   html {
-    @apply bg-background-dark;
+    @apply bg-background-dark font-merriweather;
   }
 
   html, body {
-    @apply bg-background-dark text-gray-100;
+    @apply bg-background-dark text-gray-100 font-merriweather;
     min-height: 100vh;
   }
 
@@ -21,7 +23,11 @@
   }
 
   h1, h2, h3, h4, h5, h6 {
-    @apply font-cyber;
+    @apply font-merriweather font-bold;
+  }
+
+  p, span, div {
+    @apply font-merriweather;
   }
 }
 
@@ -31,19 +37,19 @@
   }
 
   .btn-primary {
-    @apply bg-primary hover:bg-primary-light text-white font-display px-6 py-2 rounded-md transition-all duration-300 ease-in-out;
+    @apply bg-primary hover:bg-primary-light text-white font-merriweather px-6 py-2 rounded-md transition-all duration-300 ease-in-out;
   }
 
   .btn-secondary {
-    @apply bg-background-light hover:bg-background text-gray-300 hover:text-white font-display px-6 py-2 rounded-md transition-all duration-300 ease-in-out border border-primary-light/20;
+    @apply bg-background-light hover:bg-background text-gray-300 hover:text-white font-merriweather px-6 py-2 rounded-md transition-all duration-300 ease-in-out border border-primary-light/20;
   }
 
   .input-field {
-    @apply bg-background-light border border-primary-light/30 rounded-md px-4 py-2 text-gray-100 focus:outline-none focus:border-accent-blue/50 transition-all duration-300;
+    @apply bg-background-light border border-primary-light/30 rounded-md px-4 py-2 text-gray-100 focus:outline-none focus:border-accent-blue/50 transition-all duration-300 font-merriweather;
   }
 
   .nav-link {
-    @apply font-display text-gray-300 hover:text-accent-blue transition-colors duration-300;
+    @apply font-merriweather text-gray-300 hover:text-accent-blue transition-colors duration-300;
   }
 
   .nav-icon-link {
@@ -51,12 +57,12 @@
   }
 
   .nav-tooltip {
-    @apply invisible opacity-0 absolute left-full ml-2 px-3 py-1 bg-primary border border-primary-light/30 rounded-md text-sm font-display whitespace-nowrap
+    @apply invisible opacity-0 absolute left-full ml-2 px-3 py-1 bg-primary border border-primary-light/30 rounded-md text-sm font-merriweather whitespace-nowrap
     group-hover:visible group-hover:opacity-100 transition-all duration-300;
   }
 
   .logo-text {
-    @apply font-cyber text-2xl bg-gradient-to-r from-accent-blue to-accent-purple bg-clip-text text-transparent;
+    @apply font-merriweather text-2xl bg-gradient-to-r from-accent-blue to-accent-purple bg-clip-text text-transparent;
   }
 }
 
@@ -75,5 +81,10 @@
 
 /* Toast Notification Styles */
 .toast-notification {
-  @apply fixed bottom-4 right-4 bg-gradient-dark px-6 py-3 rounded-lg shadow-xl border border-primary-light/20 text-white font-display animate-fade-in-up;
+  @apply fixed bottom-4 right-4 bg-gradient-dark px-6 py-3 rounded-lg shadow-xl border border-primary-light/20 text-white font-merriweather animate-fade-in-up;
+}
+
+/* Toast bildirimleri için özel stil */
+.Toastify__toast-body {
+  font-family: 'Merriweather', serif !important;
 }
