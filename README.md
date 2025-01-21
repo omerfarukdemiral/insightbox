@@ -37,7 +37,7 @@ Uygulamayı test etmek için [https://insightbox-orcin.vercel.app/](https://insi
 
 1. Repo'yu klonlayın:
 ```bash
-git clone https://github.com/[your-username]/insightbox.git
+git clone https://github.com/omerfarukdemiral/insightbox.git
 ```
 
 2. Bağımlılıkları yükleyin:
@@ -88,6 +88,6 @@ Bu proje MIT lisansı altında lisanslanmıştır. Detaylar için [LICENSE](LICE
 
 ## 📞 İletişim
 
-Proje Sahibi - [@your-twitter](https://twitter.com/your-twitter)
+Proje Sahibi - [@omerfrkdemiral](https://twitter.com/omerfrkdemiral)
 
-Proje Linki: [https://github.com/[your-username]/insightbox](https://github.com/[your-username]/insightbox)
+Proje Linki: [https://github.com/omerfarukdemiral/insightbox](https://github.com/omerfarukdemiral/insightbox)
