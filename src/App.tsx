@@ -30,14 +30,16 @@ function App() {
       <Router>
         <div className="min-h-screen bg-zinc-950 text-white">
           <Navbar />
-          <Routes>
-            <Route path="/login" element={<Login />} />
-            <Route path="/register" element={<Register />} />
-            <Route path="/" element={<ProtectedRoute><Home /></ProtectedRoute>} />
-            <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
-            <Route path="/collection" element={<ProtectedRoute><Collection /></ProtectedRoute>} />
-            <Route path="/discover" element={<ProtectedRoute><Discover /></ProtectedRoute>} />
-          </Routes>
+          <main className="md:pl-20 pb-16 md:pb-0">
+            <Routes>
+              <Route path="/login" element={<Login />} />
+              <Route path="/register" element={<Register />} />
+              <Route path="/" element={<ProtectedRoute><Home /></ProtectedRoute>} />
+              <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+              <Route path="/collection" element={<ProtectedRoute><Collection /></ProtectedRoute>} />
+              <Route path="/discover" element={<ProtectedRoute><Discover /></ProtectedRoute>} />
+            </Routes>
+          </main>
         </div>
         <Toaster position="bottom-right" />
       </Router>

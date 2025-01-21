@@ -133,67 +133,69 @@ const Profile = () => {
   };
 
   const renderProfileCard = () => (
-    <div className="bg-zinc-900/50 border border-white/10 rounded-lg p-6 mb-6">
-      <div className="flex flex-col md:flex-row items-center gap-8">
-        <div className="relative group">
-          {currentUser.photoURL ? (
+    <div className="bg-zinc-900/50 border border-white/10 rounded-lg p-4 md:p-6 mb-6 md:mb-8">
+      <div className="flex flex-col md:flex-row items-start md:items-center gap-4 md:gap-6">
+        <div className="w-16 h-16 md:w-20 md:h-20 rounded-full bg-accent-purple/20 flex items-center justify-center">
+          {currentUser?.photoURL ? (
             <img
               src={currentUser.photoURL}
-              alt="Profil fotoğrafı"
-              className="w-32 h-32 rounded-full border-4 border-white/10 transition-transform group-hover:scale-105"
+              alt={currentUser.displayName || 'Profil fotoğrafı'}
+              className="w-full h-full rounded-full object-cover"
             />
           ) : (
-            <div className="w-32 h-32 rounded-full bg-zinc-800 border-4 border-white/10 flex items-center justify-center transition-transform group-hover:scale-105">
-              <FiUser className="w-12 h-12 text-gray-400" />
-            </div>
+            <FiUser className="w-8 h-8 md:w-10 md:h-10 text-accent-purple" />
           )}
-          <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 px-3 py-1 bg-zinc-800 rounded-full border border-white/10">
-            {getProviderIcon(currentUser.providerData[0]?.providerId || '')}
+        </div>
+
+        <div className="flex-1">
+          <h2 className="text-xl md:text-2xl font-bold mb-1">
+            {currentUser?.displayName || 'İsimsiz Kullanıcı'}
+          </h2>
+          <div className="flex flex-col md:flex-row items-start md:items-center gap-2 md:gap-4 text-sm md:text-base text-gray-400">
+            <div className="flex items-center gap-2">
+              <FiMail className="w-4 h-4" />
+              <span>{currentUser?.email}</span>
+            </div>
+            <div className="hidden md:block w-px h-4 bg-white/10" />
+            <div className="flex items-center gap-2">
+              <FiCalendar className="w-4 h-4" />
+              <span>
+                {currentUser?.metadata.creationTime ? new Date(currentUser.metadata.creationTime).toLocaleDateString('tr-TR', {
+                  year: 'numeric',
+                  month: 'long'
+                }) : 'Bilinmiyor'}
+              </span>
+            </div>
           </div>
         </div>
 
-        <div className="flex-1 space-y-4 text-center md:text-left">
-          <h2 className="text-2xl font-bold text-white">
-            {currentUser.displayName || 'İsimsiz Kullanıcı'}
-          </h2>
-          <div className="flex flex-col gap-3">
-            <div className="flex items-center justify-center md:justify-start text-gray-400 font-display">
-              <FiMail className="w-5 h-5 mr-2" />
-              <span>{currentUser.email}</span>
+        <div className="flex flex-wrap gap-2 w-full md:w-auto">
+          {currentUser?.providerData.map((provider) => (
+            <div
+              key={provider.providerId}
+              className="flex items-center gap-2 px-3 py-1.5 bg-white/5 rounded-lg text-sm"
+            >
+              {getProviderIcon(provider.providerId)}
+              <span>{provider.providerId === 'google.com' ? 'Google' : 'GitHub'}</span>
             </div>
-            <div className="flex items-center justify-center md:justify-start text-gray-400 font-display">
-              <FiCalendar className="w-5 h-5 mr-2" />
-              <span>
-                {`Katılma: ${new Date(currentUser.metadata.creationTime || '').toLocaleDateString('tr-TR')}`}
-              </span>
-            </div>
-            {currentUser.emailVerified && (
-              <div className="inline-flex items-center justify-center md:justify-start">
-                <span className="px-3 py-1 text-sm font-display bg-white/10 text-white rounded-full border border-white/20">
-                  E-posta Doğrulandı
-                </span>
-              </div>
-            )}
-          </div>
+          ))}
         </div>
       </div>
     </div>
   );
 
   const renderTabs = () => (
-    <div className="relative mb-8">
-      <div className="absolute inset-0 bg-gradient-to-r from-accent-purple/20 to-accent-purple/5 blur-xl" />
-      
-      <div className="relative flex items-center gap-4 bg-zinc-900/90 p-2 rounded-2xl backdrop-blur-sm border border-white/10">
+    <div className="mb-6 md:mb-8">
+      <div className="flex items-center gap-2 bg-zinc-900/50 border border-white/10 rounded-lg p-2">
         <button
           onClick={() => setActiveTab('categories')}
-          className={`relative flex-1 flex items-center justify-center gap-2 py-4 px-6 rounded-xl font-display font-bold text-lg transition-all duration-300 ${
+          className={`relative flex-1 flex items-center justify-center gap-2 py-3 md:py-4 px-4 md:px-6 rounded-xl font-display font-bold text-sm md:text-lg transition-all duration-300 ${
             activeTab === 'categories'
               ? 'bg-white text-zinc-900 shadow-lg shadow-white/10 transform -translate-y-0.5'
               : 'text-gray-400 hover:text-white hover:bg-white/5'
           }`}
         >
-          <FiGrid className={`w-5 h-5 ${
+          <FiGrid className={`w-4 h-4 md:w-5 md:h-5 ${
             activeTab === 'categories' ? 'text-accent-purple' : 'text-current'
           }`} />
           <span>Kategoriler</span>
@@ -206,13 +208,13 @@ const Profile = () => {
 
         <button
           onClick={() => setActiveTab('collections')}
-          className={`relative flex-1 flex items-center justify-center gap-2 py-4 px-6 rounded-xl font-display font-bold text-lg transition-all duration-300 ${
+          className={`relative flex-1 flex items-center justify-center gap-2 py-3 md:py-4 px-4 md:px-6 rounded-xl font-display font-bold text-sm md:text-lg transition-all duration-300 ${
             activeTab === 'collections'
               ? 'bg-white text-zinc-900 shadow-lg shadow-white/10 transform -translate-y-0.5'
               : 'text-gray-400 hover:text-white hover:bg-white/5'
           }`}
         >
-          <FiFolder className={`w-5 h-5 ${
+          <FiFolder className={`w-4 h-4 md:w-5 md:h-5 ${
             activeTab === 'collections' ? 'text-accent-purple' : 'text-current'
           }`} />
           <span>Koleksiyonlar</span>
@@ -225,12 +227,12 @@ const Profile = () => {
   );
 
   const renderCategoriesTab = () => (
-    <div className="bg-zinc-900/50 border border-white/10 rounded-lg p-6">
-      <div className="flex items-center gap-3 mb-6">
-        <FiGrid className="w-6 h-6 text-accent-purple" />
-        <h3 className="text-xl font-display font-bold text-white">Kategori Tercihleri</h3>
+    <div className="bg-zinc-900/50 border border-white/10 rounded-lg p-4 md:p-6">
+      <div className="flex items-center gap-3 mb-4 md:mb-6">
+        <FiGrid className="w-5 h-5 md:w-6 md:h-6 text-accent-purple" />
+        <h3 className="text-lg md:text-xl font-display font-bold text-white">Kategori Tercihleri</h3>
       </div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
         {categories.map((category) => {
           const Icon = category.icon;
           const selectedCount = selectedSubCategories[category.id]?.length || 0;
@@ -240,24 +242,24 @@ const Profile = () => {
           return (
             <div
               key={category.id}
-              className="flex flex-col p-4 bg-zinc-800/50 rounded-lg border border-white/10 hover:bg-zinc-800 transition-colors"
+              className="flex flex-col p-3 md:p-4 bg-zinc-800/50 rounded-lg border border-white/10 hover:bg-zinc-800 transition-colors"
             >
-              <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center justify-between mb-3 md:mb-4">
                 <div className="flex items-center gap-2">
-                  <Icon className="w-5 h-5 text-gray-400" />
-                  <h4 className="font-display font-medium text-white">{category.name}</h4>
+                  <Icon className="w-4 h-4 md:w-5 md:h-5 text-gray-400" />
+                  <h4 className="font-display font-medium text-sm md:text-base text-white">{category.name}</h4>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1 md:gap-2">
                   <button
                     onClick={() => toggleFavorite(category.id)}
-                    className={`p-2 rounded-lg transition-colors ${
+                    className={`p-1.5 md:p-2 rounded-lg transition-colors ${
                       favoriteCategories.includes(category.id)
                         ? 'text-yellow-500 hover:bg-yellow-500/10'
                         : 'text-gray-400 hover:bg-white/10'
                     }`}
                   >
                     <FiStar 
-                      className={`w-5 h-5 ${favoriteCategories.includes(category.id) ? 'fill-current' : ''}`} 
+                      className={`w-4 h-4 md:w-5 md:h-5 ${favoriteCategories.includes(category.id) ? 'fill-current' : ''}`} 
                     />
                   </button>
                   <button
@@ -265,15 +267,15 @@ const Profile = () => {
                       setSelectedCategory(category.id);
                       setShowSubCategoryModal(true);
                     }}
-                    className="p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
+                    className="p-1.5 md:p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
                   >
-                    <FiSettings className="w-5 h-5" />
+                    <FiSettings className="w-4 h-4 md:w-5 md:h-5" />
                   </button>
                 </div>
               </div>
               <div className="flex-1">
-                <p className="text-sm font-display text-gray-400 mb-2">{category.description}</p>
-                <div className="text-sm font-display text-gray-400">
+                <p className="text-xs md:text-sm font-display text-gray-400 mb-2">{category.description}</p>
+                <div className="text-xs md:text-sm font-display text-gray-400">
                   {hasCustomSelection ? (
                     <span>{selectedCount} alt kategori seçili</span>
                   ) : (
@@ -289,32 +291,32 @@ const Profile = () => {
   );
 
   const renderCollectionsTab = () => (
-    <div className="bg-zinc-900/50 border border-white/10 rounded-lg p-6">
-      <div className="flex items-center gap-3 mb-6">
-        <FiFolder className="w-6 h-6 text-accent-purple" />
-        <h3 className="text-xl font-display font-bold text-white">Koleksiyon İstatistikleri</h3>
+    <div className="bg-zinc-900/50 border border-white/10 rounded-lg p-4 md:p-6">
+      <div className="flex items-center gap-3 mb-4 md:mb-6">
+        <FiFolder className="w-5 h-5 md:w-6 md:h-6 text-accent-purple" />
+        <h3 className="text-lg md:text-xl font-display font-bold text-white">Koleksiyon İstatistikleri</h3>
       </div>
-      <div className="grid gap-6">
-        <div className="flex items-center justify-between p-4 bg-zinc-800/50 rounded-lg border border-white/10">
+      <div className="grid gap-4 md:gap-6">
+        <div className="flex items-center justify-between p-3 md:p-4 bg-zinc-800/50 rounded-lg border border-white/10">
           <div className="flex items-center font-display">
-            <FiBookmark className="w-5 h-5 text-white mr-3" />
-            <span>Toplam Kayıt</span>
+            <FiBookmark className="w-4 h-4 md:w-5 md:h-5 text-white mr-2 md:mr-3" />
+            <span className="text-sm md:text-base">Toplam Kayıt</span>
           </div>
-          <span className="text-xl font-display font-bold text-white">{userStats.totalItems}</span>
+          <span className="text-lg md:text-xl font-display font-bold text-white">{userStats.totalItems}</span>
         </div>
 
         {Object.entries(userStats.categories).length > 0 && (
-          <div className="space-y-4">
-            <div className="text-gray-400 font-display">Kategori Dağılımı</div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="space-y-3 md:space-y-4">
+            <div className="text-sm md:text-base text-gray-400 font-display">Kategori Dağılımı</div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
               {Object.entries(userStats.categories)
                 .sort(([, a], [, b]) => b - a)
                 .map(([category/*, count*/]) => (
                   <div
                     key={category}
-                    className="flex items-center font-display"
+                    className="flex items-center font-display text-sm md:text-base"
                   >
-                    <FiTag className="w-4 h-4 text-white mr-2" />
+                    <FiTag className="w-3.5 h-3.5 md:w-4 md:h-4 text-white mr-2" />
                     <span>{category}</span>
                   </div>
                 ))}
@@ -326,9 +328,9 @@ const Profile = () => {
   );
 
   return (
-    <div className="min-h-screen pt-24 px-8">
+    <div className="min-h-screen pt-16 md:pt-24 px-4 md:px-8">
       <div className="max-w-4xl mx-auto">
-        <h1 className="text-3xl font-bold mb-8">Profil</h1>
+        <h1 className="text-2xl md:text-3xl font-bold mb-6 md:mb-8">Profil</h1>
         
         {renderProfileCard()}
         {renderTabs()}

@@ -269,55 +269,55 @@ const Home = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen pt-24 px-8 flex justify-center">
+      <div className="min-h-screen pt-16 md:pt-24 px-4 md:px-8 flex justify-center">
         <div className="w-12 h-12 border-t-2 border-white rounded-full animate-spin"></div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen pt-24 px-8">
+    <div className="min-h-screen pt-16 md:pt-24 px-4 md:px-8">
       <div className="max-w-4xl mx-auto">
-        <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold">Bilgi Akışı</h1>
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 md:gap-0 mb-8">
+          <h1 className="text-2xl md:text-3xl font-bold">Bilgi Akışı</h1>
           <Link 
             to="/discover"
-            className="bg-accent-purple text-white px-4 py-2 rounded-lg hover:bg-accent-purple/90 transition-colors"
+            className="w-full md:w-auto bg-accent-purple text-white px-4 py-2 rounded-lg hover:bg-accent-purple/90 transition-colors text-center"
           >
             Yeni Bilgi Keşfet
           </Link>
         </div>
 
-        <div className="grid gap-6">
+        <div className="grid gap-4 md:gap-6">
           {savedInfos.map((item) => (
             <div key={item.id} className="bg-zinc-900/50 border border-white/10 rounded-lg overflow-hidden">
               {/* Üst Kısım - Kullanıcı ve Koleksiyon Bilgisi */}
-              <div className="px-6 pt-4 pb-2 border-b border-white/10">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-4">
+              <div className="px-4 md:px-6 pt-4 pb-2 border-b border-white/10">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-2 md:gap-0">
+                  <div className="flex items-center gap-4 flex-wrap">
                     <Link to={`/profile/${item.userId}`} className="flex items-center gap-2 text-gray-300 hover:text-white">
                       <div className="w-8 h-8 rounded-full bg-accent-purple/20 flex items-center justify-center">
                         <FiUser className="w-4 h-4 text-accent-purple" />
                       </div>
                       <div className="flex flex-col">
                         <span className="text-sm font-medium">{item.userDisplayName || 'İsimsiz Kullanıcı'}</span>
-                        <span className="text-xs text-gray-400">{item.userEmail}</span>
+                        <span className="text-xs text-gray-400 hidden md:block">{item.userEmail}</span>
                       </div>
                     </Link>
                     <Link to={`/collection/${item.collectionId}`} className="flex items-center gap-2 text-gray-400">
                       <FiFolder className="w-4 h-4" />
-                      <span>{item.collectionName}</span>
+                      <span className="text-sm">{item.collectionName}</span>
                     </Link>
                   </div>
-                  <div className="flex items-center gap-1 text-sm text-gray-400">
+                  <div className="flex items-center gap-1 text-xs md:text-sm text-gray-400">
                     {new Date(item.createdAt.toDate()).toLocaleDateString('tr-TR')}
                   </div>
                 </div>
               </div>
 
               {/* Orta Kısım - Kategoriler ve İçerik */}
-              <div className="p-6">
-                <div className="flex items-center gap-2 mb-4">
+              <div className="p-4 md:p-6">
+                <div className="flex flex-wrap items-center gap-2 mb-4">
                   <span className="px-3 py-1 rounded-full bg-white/10 text-white border border-white/20 text-sm">
                     {item.category}
                   </span>
@@ -327,11 +327,11 @@ const Home = () => {
                     </span>
                   )}
                 </div>
-                <p className="leading-relaxed text-gray-200">{item.content}</p>
+                <p className="leading-relaxed text-gray-200 text-sm md:text-base">{item.content}</p>
               </div>
 
               {/* Alt Kısım - Oylar */}
-              <div className="px-6 py-3 bg-black/20 border-t border-white/10 flex items-center justify-between">
+              <div className="px-4 md:px-6 py-3 bg-black/20 border-t border-white/10 flex items-center justify-between">
                 <div className="flex items-center gap-4">
                   <div className="flex items-center gap-1">
                     <button
@@ -370,7 +370,7 @@ const Home = () => {
           ))}
 
           {savedInfos.length === 0 && (
-            <div className="text-center py-12 text-gray-400">
+            <div className="text-center py-8 md:py-12 text-gray-400">
               <p>Henüz hiç bilgi paylaşılmamış</p>
             </div>
           )}

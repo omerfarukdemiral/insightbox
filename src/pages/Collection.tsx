@@ -6,40 +6,6 @@ import { FiTrash2, FiSearch, FiFilter, FiGrid, FiFolderPlus, FiX, FiAlertTriangl
 import { toast } from 'react-hot-toast';
 import { icons } from '../utils/icons';
 
-interface DeleteModalProps {
-  collectionName: string;
-  onConfirm: () => void;
-  onCancel: () => void;
-}
-
-const DeleteModal = ({ collectionName, onConfirm, onCancel }: DeleteModalProps) => (
-  <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-    <div className="bg-zinc-900 border border-white/10 rounded-lg p-6 w-full max-w-md">
-      <div className="flex items-center gap-3 mb-4 text-red-500">
-        <FiAlertTriangle className="w-6 h-6" />
-        <h2 className="text-xl font-bold">Koleksiyon Silinecek</h2>
-      </div>
-      <p className="text-gray-300 mb-6">
-        <span className="font-semibold">{collectionName}</span> koleksiyonunu ve içindeki tüm bilgileri silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.
-      </p>
-      <div className="flex justify-end space-x-2">
-        <button
-          onClick={onCancel}
-          className="bg-transparent border border-white/20 hover:border-white/40 text-white px-4 py-2 rounded-lg transition-all duration-300 hover:bg-white/5"
-        >
-          İptal
-        </button>
-        <button
-          onClick={onConfirm}
-          className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition-all duration-300"
-        >
-          Sil
-        </button>
-      </div>
-    </div>
-  </div>
-);
-
 const Collection = () => {
   const { currentUser } = useAuth();
   const [savedInfo, setSavedInfo] = useState<SavedInfo[]>([]);
@@ -207,46 +173,68 @@ const Collection = () => {
 
   const renderCollectionList = () => (
     <>
-      <div className="flex justify-between items-center mb-8">
-        <h2 className="text-2xl font-bold">Kişiye Özel Koleksiyonlar</h2>
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 md:gap-0 mb-8">
+        <div>
+          <h1 className="text-2xl md:text-3xl font-bold mb-2">Koleksiyonlarım</h1>
+          <p className="text-sm md:text-base text-gray-400">Kaydettiğiniz bilgileri düzenli bir şekilde saklayın</p>
+        </div>
         <button
           onClick={() => setShowNewCollectionModal(true)}
-          className="bg-white text-zinc-900 px-4 py-2 rounded-lg transition-all duration-300 hover:bg-gray-100 flex items-center gap-2"
+          className="w-full md:w-auto bg-accent-purple text-white px-4 py-2 rounded-lg hover:bg-accent-purple/90 transition-colors flex items-center justify-center gap-2"
         >
           <FiFolderPlus className="w-5 h-5" />
           <span>Yeni Koleksiyon</span>
         </button>
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {userCollections.map(collection => {
-          const IconComponent = icons[collection.icon || 'FiFolder'];
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        {userCollections.map((collection) => {
+          const Icon = icons[collection.icon || 'FiFolder'];
+          const collectionInfo = savedInfo.filter(info => info.collectionId === collection.id);
+          
           return (
-            <div
-              key={collection.id}
-              className="bg-zinc-900/50 border border-white/10 rounded-lg p-6 hover:border-white/20 transition-all duration-300 cursor-pointer"
-              onClick={() => setSelectedCollection(collection.id)}
-            >
-              <div className="flex items-start justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="p-3 bg-white/5 rounded-lg">
-                    <IconComponent className="w-6 h-6" />
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-lg">{collection.name}</h3>
-                    <p className="text-sm text-gray-400">{collection.itemCount} bilgi</p>
-                  </div>
-                </div>
-                {collection.name !== 'Genel' && (
+            <div key={collection.id} className="bg-zinc-900/50 border border-white/10 rounded-lg overflow-hidden">
+              <div className="p-4 md:p-6">
+                <div className="flex items-start justify-between mb-4">
                   <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setDeleteModalInfo({ id: collection.id, name: collection.name });
-                    }}
-                    className="text-gray-400 hover:text-red-500 transition-colors p-1"
+                    onClick={() => setSelectedCollection(collection.id)}
+                    className="flex items-center gap-3 text-left group flex-1"
                   >
-                    <FiTrash2 className="w-5 h-5" />
+                    <div className="w-12 h-12 rounded-xl bg-accent-purple/20 flex items-center justify-center">
+                      <Icon className="w-6 h-6 text-accent-purple" />
+                    </div>
+                    <div>
+                      <h3 className="font-medium text-lg group-hover:text-white transition-colors">{collection.name}</h3>
+                      <p className="text-sm text-gray-400">{collection.itemCount} bilgi</p>
+                    </div>
                   </button>
-                )}
+                  {collection.name !== 'Genel' && (
+                    <button
+                      onClick={() => setDeleteModalInfo({ id: collection.id, name: collection.name })}
+                      className="p-2 text-gray-400 hover:text-red-500 transition-colors rounded-lg hover:bg-white/5"
+                    >
+                      <FiTrash2 className="w-4 h-4" />
+                    </button>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  {collectionInfo.slice(0, 2).map((info) => (
+                    <div key={info.id} className="text-sm text-gray-400 truncate">
+                      • {info.content}
+                    </div>
+                  ))}
+                  {collectionInfo.length > 2 && (
+                    <div className="text-sm text-gray-500">
+                      ve {collectionInfo.length - 2} bilgi daha...
+                    </div>
+                  )}
+                  {collectionInfo.length === 0 && (
+                    <div className="text-sm text-gray-500">
+                      Henüz bilgi eklenmemiş
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           );
@@ -261,7 +249,7 @@ const Collection = () => {
 
     return (
       <>
-        <div className="flex items-center gap-4 mb-8">
+        <div className="flex flex-col md:flex-row items-start md:items-center gap-4 mb-6 md:mb-8">
           <button
             onClick={() => setSelectedCollection(null)}
             className="bg-transparent border border-white/20 hover:border-white/40 text-white p-2 rounded-lg transition-all duration-300 hover:bg-white/5"
@@ -269,26 +257,26 @@ const Collection = () => {
             <FiArrowLeft className="w-5 h-5" />
           </button>
           <div>
-            <h2 className="text-2xl font-bold">{collection.name}</h2>
-            <p className="text-gray-400">{collection.itemCount} bilgi</p>
+            <h2 className="text-xl md:text-2xl font-bold">{collection.name}</h2>
+            <p className="text-sm text-gray-400">{collection.itemCount} bilgi</p>
           </div>
         </div>
 
-        <div className="flex items-center gap-4 mb-6">
+        <div className="flex flex-col md:flex-row items-stretch md:items-center gap-4 mb-6">
           <div className="relative flex-1">
             <input
               type="text"
               placeholder="Bilgilerde ara..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full px-4 py-2.5 bg-zinc-800 border border-white/20 text-white rounded-lg focus:outline-none focus:border-white/40"
+              className="w-full px-4 py-2.5 bg-zinc-800 border border-white/20 text-white rounded-lg focus:outline-none focus:border-white/40 text-sm md:text-base"
             />
             <FiSearch className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
           </div>
           <div className="flex items-center gap-2">
             <button
               onClick={() => setViewMode('list')}
-              className={`p-2.5 rounded-lg border transition-all duration-300 ${
+              className={`flex-1 md:flex-none p-2.5 rounded-lg border transition-all duration-300 ${
                 viewMode === 'list'
                   ? 'bg-white text-zinc-900'
                   : 'bg-transparent border-white/20 text-white hover:bg-white/5'
@@ -298,7 +286,7 @@ const Collection = () => {
             </button>
             <button
               onClick={() => setViewMode('grid')}
-              className={`p-2.5 rounded-lg border transition-all duration-300 ${
+              className={`flex-1 md:flex-none p-2.5 rounded-lg border transition-all duration-300 ${
                 viewMode === 'grid'
                   ? 'bg-white text-zinc-900'
                   : 'bg-transparent border-white/20 text-white hover:bg-white/5'
@@ -311,11 +299,11 @@ const Collection = () => {
 
         {Object.keys(categoryCounts).length > 0 && (
           <div className="mb-6">
-            <h3 className="text-lg font-semibold mb-3 text-white/80">Kategoriler</h3>
+            <h3 className="text-base md:text-lg font-semibold mb-3 text-white/80">Kategoriler</h3>
             <div className="flex flex-wrap gap-2">
               <button
                 onClick={() => setSelectedCategory(null)}
-                className={`px-4 py-2 rounded-lg border transition-all duration-300 ${
+                className={`px-3 md:px-4 py-1.5 md:py-2 rounded-lg border text-sm md:text-base transition-all duration-300 ${
                   !selectedCategory
                     ? 'bg-white text-zinc-900'
                     : 'bg-transparent border-white/20 text-white hover:bg-white/5'
@@ -327,7 +315,7 @@ const Collection = () => {
                 <button
                   key={category}
                   onClick={() => setSelectedCategory(category)}
-                  className={`px-4 py-2 rounded-lg border transition-all duration-300 ${
+                  className={`px-3 md:px-4 py-1.5 md:py-2 rounded-lg border text-sm md:text-base transition-all duration-300 ${
                     selectedCategory === category
                       ? 'bg-white text-zinc-900'
                       : 'bg-transparent border-white/20 text-white hover:bg-white/5'
@@ -341,17 +329,17 @@ const Collection = () => {
         )}
 
         {filteredInfo.length > 0 ? (
-          <div className={viewMode === 'grid' ? 'grid grid-cols-2 gap-4' : 'grid gap-4'}>
+          <div className={viewMode === 'grid' ? 'grid grid-cols-1 md:grid-cols-2 gap-4' : 'grid gap-4'}>
             {filteredInfo.map((info) => (
               <div key={info.id} className="bg-zinc-900/50 border border-white/10 rounded-lg overflow-hidden">
                 {/* Üst Kısım - Kategoriler */}
-                <div className="px-6 pt-4 pb-2 border-b border-white/10">
+                <div className="px-4 md:px-6 pt-4 pb-2 border-b border-white/10">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <span className="px-3 py-1 rounded-full bg-white/10 text-white border border-white/20 text-sm">
+                    <span className="px-3 py-1 rounded-full bg-white/10 text-white border border-white/20 text-xs md:text-sm">
                       {info.category}
                     </span>
                     {info.subCategory && (
-                      <span className="px-3 py-1 rounded-full bg-accent-purple/10 text-accent-purple border border-accent-purple/20 text-sm">
+                      <span className="px-3 py-1 rounded-full bg-accent-purple/10 text-accent-purple border border-accent-purple/20 text-xs md:text-sm">
                         {info.subCategory}
                       </span>
                     )}
@@ -359,14 +347,14 @@ const Collection = () => {
                 </div>
 
                 {/* Orta Kısım - İçerik ve Görsel */}
-                <div className="p-6">
-                  <p className="leading-relaxed text-gray-200 mb-4">{info.content}</p>
+                <div className="p-4 md:p-6">
+                  <p className="leading-relaxed text-gray-200 text-sm md:text-base mb-4">{info.content}</p>
                   {info.imageUrl && (
                     <div className="relative group mb-4">
                       <img 
                         src={info.imageUrl} 
                         alt="Bilgi görseli"
-                        className="w-full h-48 object-cover rounded-lg cursor-pointer"
+                        className="w-full h-36 md:h-48 object-cover rounded-lg cursor-pointer"
                         onClick={() => handleImageSelect(info.imageUrl)}
                       />
                       <button
@@ -380,17 +368,17 @@ const Collection = () => {
                 </div>
 
                 {/* Alt Kısım - Footer */}
-                <div className="px-6 py-3 bg-black/20 border-t border-white/10 flex items-center justify-between">
-                  <div className="flex items-center gap-2">
+                <div className="px-4 md:px-6 py-3 bg-black/20 border-t border-white/10 flex flex-col md:flex-row items-start md:items-center justify-between gap-3 md:gap-0">
+                  <div className="flex items-center gap-2 w-full md:w-auto">
                     <button
                       onClick={() => handleGenerateImage(info)}
                       disabled={!!generatingImage}
-                      className={`flex items-center gap-2 px-3 py-1.5 rounded-lg bg-accent-purple hover:bg-accent-purple/80 text-white transition-all duration-300 ${
+                      className={`flex-1 md:flex-none flex items-center justify-center gap-2 px-3 py-1.5 rounded-lg bg-accent-purple hover:bg-accent-purple/80 text-white transition-all duration-300 ${
                         generatingImage === info.id ? 'animate-pulse' : ''
                       }`}
                     >
                       <FiImage className="w-4 h-4" />
-                      <span className="text-sm">Görsel Oluştur</span>
+                      <span className="text-xs md:text-sm">Görsel Oluştur</span>
                     </button>
                     <button
                       onClick={() => handleCopyContent(info.content)}
@@ -400,8 +388,8 @@ const Collection = () => {
                       <FiCopy className="w-4 h-4" />
                     </button>
                   </div>
-                  <div className="flex items-center">
-                    <span className="text-sm text-gray-400 mr-4">
+                  <div className="flex items-center justify-between md:justify-start w-full md:w-auto">
+                    <span className="text-xs md:text-sm text-gray-400 md:mr-4">
                       {new Date(info.createdAt).toLocaleDateString('tr-TR')}
                     </span>
                     <button
@@ -417,11 +405,11 @@ const Collection = () => {
             ))}
           </div>
         ) : (
-          <div className="text-center py-12 text-gray-400">
+          <div className="text-center py-8 md:py-12 text-gray-400">
             {searchTerm || selectedCategory ? (
-              <p>Aramanızla eşleşen bilgi bulunamadı.</p>
+              <p className="text-sm md:text-base">Aramanızla eşleşen bilgi bulunamadı.</p>
             ) : (
-              <p>Bu koleksiyonda henüz bilgi yok.</p>
+              <p className="text-sm md:text-base">Bu koleksiyonda henüz bilgi yok.</p>
             )}
           </div>
         )}
@@ -430,20 +418,20 @@ const Collection = () => {
   };
 
   return (
-    <div className="min-h-screen pt-24 px-8">
+    <div className="min-h-screen pt-16 md:pt-24 px-4 md:px-8">
       <div className="max-w-4xl mx-auto">
         {selectedCollection ? renderCollectionContent() : renderCollectionList()}
 
         {showNewCollectionModal && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-            <div className="bg-zinc-900 border border-white/10 rounded-lg p-6 w-full max-w-md">
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div className="bg-zinc-900 border border-white/10 rounded-lg p-4 md:p-6 w-full max-w-md">
               <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-bold">Yeni Koleksiyon Oluştur</h2>
+                <h2 className="text-lg md:text-xl font-bold">Yeni Koleksiyon Oluştur</h2>
                 <button
                   onClick={() => setShowNewCollectionModal(false)}
                   className="text-gray-400 hover:text-white transition-colors"
                 >
-                  <FiX className="w-6 h-6" />
+                  <FiX className="w-5 h-5 md:w-6 md:h-6" />
                 </button>
               </div>
               <input
@@ -451,11 +439,11 @@ const Collection = () => {
                 value={newCollectionName}
                 onChange={(e) => setNewCollectionName(e.target.value)}
                 placeholder="Koleksiyon adı"
-                className="w-full bg-zinc-800 border border-white/20 text-white rounded-lg px-4 py-2 mb-4 focus:outline-none focus:border-white/40"
+                className="w-full bg-zinc-800 border border-white/20 text-white rounded-lg px-4 py-2 mb-4 focus:outline-none focus:border-white/40 text-sm md:text-base"
               />
               <div className="mb-4">
-                <label className="block text-sm text-gray-400 mb-2">İkon Seç</label>
-                <div className="grid grid-cols-6 gap-2 max-h-40 overflow-y-auto p-2 bg-zinc-800 rounded-lg border border-white/20">
+                <label className="block text-xs md:text-sm text-gray-400 mb-2">İkon Seç</label>
+                <div className="grid grid-cols-6 gap-2 max-h-36 md:max-h-40 overflow-y-auto p-2 bg-zinc-800 rounded-lg border border-white/20">
                   {Object.entries(icons).map(([key, Icon]) => (
                     <button
                       key={key}
@@ -466,7 +454,7 @@ const Collection = () => {
                           : 'text-white hover:bg-white/10'
                       }`}
                     >
-                      <Icon className="w-5 h-5" />
+                      <Icon className="w-4 h-4 md:w-5 md:h-5" />
                     </button>
                   ))}
                 </div>
@@ -474,13 +462,13 @@ const Collection = () => {
               <div className="flex justify-end space-x-2">
                 <button
                   onClick={() => setShowNewCollectionModal(false)}
-                  className="bg-transparent border border-white/20 hover:border-white/40 text-white px-4 py-2 rounded-lg transition-all duration-300 hover:bg-white/5"
+                  className="flex-1 md:flex-none bg-transparent border border-white/20 hover:border-white/40 text-white px-4 py-2 rounded-lg transition-all duration-300 hover:bg-white/5 text-sm md:text-base"
                 >
                   İptal
                 </button>
                 <button
                   onClick={handleCreateCollection}
-                  className="bg-white text-zinc-900 px-4 py-2 rounded-lg transition-all duration-300 hover:bg-gray-100"
+                  className="flex-1 md:flex-none bg-white text-zinc-900 px-4 py-2 rounded-lg transition-all duration-300 hover:bg-gray-100 text-sm md:text-base"
                 >
                   Oluştur
                 </button>
@@ -490,22 +478,39 @@ const Collection = () => {
         )}
 
         {deleteModalInfo && (
-          <DeleteModal
-            collectionName={deleteModalInfo.name}
-            onConfirm={handleDeleteCollection}
-            onCancel={() => setDeleteModalInfo(null)}
-          />
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div className="bg-zinc-900 border border-white/10 rounded-lg p-4 md:p-6 w-full max-w-md">
+              <div className="flex items-center gap-3 mb-4 text-red-500">
+                <FiAlertTriangle className="w-5 h-5 md:w-6 md:h-6" />
+                <h2 className="text-lg md:text-xl font-bold">Koleksiyon Silinecek</h2>
+              </div>
+              <p className="text-sm md:text-base text-gray-300 mb-6">
+                <span className="font-semibold">{deleteModalInfo.name}</span> koleksiyonunu ve içindeki tüm bilgileri silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.
+              </p>
+              <div className="flex justify-end space-x-2">
+                <button
+                  onClick={() => setDeleteModalInfo(null)}
+                  className="flex-1 md:flex-none bg-transparent border border-white/20 hover:border-white/40 text-white px-4 py-2 rounded-lg transition-all duration-300 hover:bg-white/5 text-sm md:text-base"
+                >
+                  İptal
+                </button>
+                <button
+                  onClick={handleDeleteCollection}
+                  className="flex-1 md:flex-none bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition-all duration-300 text-sm md:text-base"
+                >
+                  Sil
+                </button>
+              </div>
+            </div>
+          </div>
         )}
 
         {selectedImage && (
-          <div 
-            className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-8 cursor-pointer"
-            onClick={() => setSelectedImage(null)}
-          >
-            <div className="relative max-w-4xl w-full">
+          <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-50 p-4">
+            <div className="relative w-full max-w-4xl">
               <img 
                 src={selectedImage} 
-                alt="Büyütülmüş görsel" 
+                alt="Büyük görsel" 
                 className="w-full h-auto rounded-lg"
               />
               <button

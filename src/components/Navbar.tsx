@@ -16,14 +16,14 @@ const Navbar = () => {
   };
 
   return (
-    <nav className="fixed top-0 left-0 w-20 h-screen bg-background-dark border-r border-primary-light/20 flex flex-col items-center py-8 z-50">
-      <div className="mb-12">
+    <nav className="fixed md:top-0 bottom-0 md:left-0 w-full md:w-20 md:h-screen h-16 bg-background-dark border-t md:border-t-0 md:border-r border-primary-light/20 flex md:flex-col flex-row items-center md:py-8 z-50">
+      <div className="md:mb-12 hidden md:block">
         <Link to="/" className="flex flex-col items-center">
           <img src="/insight-box-logo.svg" alt="InsightBox Logo" className="w-12 h-12" />
         </Link>
       </div>
 
-      <div className="flex flex-col items-center space-y-8 flex-1">
+      <div className="flex md:flex-col flex-row items-center md:space-y-8 md:space-x-0 space-x-8 flex-1 justify-center md:justify-start px-4 md:px-0">
         <Link
           to="/"
           className={`nav-icon-link group ${
@@ -31,7 +31,7 @@ const Navbar = () => {
           }`}
         >
           <FiHome className="w-6 h-6" />
-          <span className="nav-tooltip">Ana Sayfa</span>
+          <span className="nav-tooltip md:left-full md:ml-2 md:top-0 -top-full left-1/2 -translate-x-1/2 md:translate-x-0">Ana Sayfa</span>
         </Link>
 
         <Link
@@ -41,7 +41,7 @@ const Navbar = () => {
           }`}
         >
           <FiCompass className="w-6 h-6" />
-          <span className="nav-tooltip">Keşfet</span>
+          <span className="nav-tooltip md:left-full md:ml-2 md:top-0 -top-full left-1/2 -translate-x-1/2 md:translate-x-0">Keşfet</span>
         </Link>
 
         <Link
@@ -51,7 +51,7 @@ const Navbar = () => {
           }`}
         >
           <FiFolder className="w-6 h-6" />
-          <span className="nav-tooltip">Koleksiyonlarım</span>
+          <span className="nav-tooltip md:left-full md:ml-2 md:top-0 -top-full left-1/2 -translate-x-1/2 md:translate-x-0">Koleksiyonlarım</span>
         </Link>
 
         {currentUser && (
@@ -63,15 +63,15 @@ const Navbar = () => {
               }`}
             >
               <FiUser className="w-6 h-6" />
-              <span className="nav-tooltip">Profil</span>
+              <span className="nav-tooltip md:left-full md:ml-2 md:top-0 -top-full left-1/2 -translate-x-1/2 md:translate-x-0">Profil</span>
             </Link>
 
             <button
               onClick={handleLogout}
-              className="nav-icon-link group mt-auto text-gray-400 hover:text-white"
+              className="nav-icon-link group md:mt-auto text-gray-400 hover:text-white"
             >
               <FiLogOut className="w-6 h-6" />
-              <span className="nav-tooltip">Çıkış</span>
+              <span className="nav-tooltip md:left-full md:ml-2 md:top-0 -top-full left-1/2 -translate-x-1/2 md:translate-x-0">Çıkış</span>
             </button>
           </>
         )}
@@ -84,7 +84,7 @@ const Navbar = () => {
             }`}
           >
             <FiUser className="w-6 h-6" />
-            <span className="nav-tooltip">Giriş</span>
+            <span className="nav-tooltip md:left-full md:ml-2 md:top-0 -top-full left-1/2 -translate-x-1/2 md:translate-x-0">Giriş</span>
           </Link>
         )}
       </div>
